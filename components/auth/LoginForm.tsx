@@ -71,8 +71,13 @@ export default function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full p-2 border rounded-md"
+            className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
           />
+          <div className="mt-1 text-right">
+            <Link href="/password-reset/request" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
+              Forgot password?
+            </Link>
+          </div>
         </div>
         
         <button
