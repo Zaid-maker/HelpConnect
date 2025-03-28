@@ -36,89 +36,55 @@ export default function SignupForm() {
         return;
       }
 
-      // Create user in Supabase Auth
-      console.log('Attempting to create auth user...');
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
+      // Call our API endpoint to create user and profile
+      console.log('Calling signup API...');
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          email,
+          password,
+          username,
+          fullName,
+        }),
       });
 
-      console.log('Auth response:', JSON.stringify({ authData, authError }, null, 2));
+      const data = await response.json();
+      console.log('Signup API response:', data);
 
-      if (authError) {
-        console.error('Auth error details:', {
-          message: authError.message,
-          name: authError.name,
-          stack: authError.stack,
-          cause: authError.cause,
-          toString: authError.toString()
-        });
-        throw authError;
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create account');
       }
 
-      if (!authData || !authData.user) {
-        throw new Error('Failed to create user: No user data returned');
+      // If signup successful, sign in the user
+      console.log('Signup successful, signing in...');
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        console.error('Sign in error after signup:', signInError);
+        throw signInError;
       }
 
-      console.log('User created successfully, creating profile...');
-      
-      // Create profile in profiles table
-      const { error: profileError, data: profileData } = await supabase
-        .from('profiles')
-        .insert({
-          id: authData.user.id,
-          username,
-          full_name: fullName,
-        })
-        .select();
-
-      console.log('Profile creation response:', JSON.stringify({ profileData, profileError }, null, 2));
-
-      if (profileError) {
-        console.error('Profile error details:', {
-          message: profileError.message,
-          code: profileError.code,
-          details: profileError.details,
-          hint: profileError.hint,
-          toString: profileError.toString()
-        });
-        throw profileError;
-      }
-
-      // Check if email confirmation is required
-      if (authData.user.identities && authData.user.identities.length === 0) {
-        console.log('Email confirmation required, redirecting to success page');
-        router.push('/signup-success');
-      } else {
-        console.log('No email confirmation required, redirecting to dashboard');
-        router.push('/dashboard');
-        router.refresh();
-      }
+      console.log('Sign in successful, redirecting to dashboard');
+      router.push('/dashboard');
+      router.refresh();
     } catch (error) {
       console.error('Signup error details:', error);
-      console.error('Error type:', typeof error);
-      console.error('Error JSON:', JSON.stringify(error, null, 2));
-      console.error('Error props:', Object.keys(error as object).join(', '));
       
       // Handle different error types properly
       if (error instanceof Error) {
         setError(error.message || 'An error occurred during signup');
       } else if (typeof error === 'object' && error !== null) {
-        // For Supabase errors that might be in a different format
+        // For API errors that might be in a different format
         const errorObj = error as Record<string, unknown>;
-        console.log('Error object keys:', Object.keys(errorObj));
-        
-        // Try multiple ways to extract a meaningful error message
         const errorMessage = 
           typeof errorObj.message === 'string' ? errorObj.message :
           typeof errorObj.error === 'string' ? errorObj.error :
-          typeof errorObj.code === 'string' ? errorObj.code :
-          typeof errorObj.details === 'string' ? errorObj.details :
           JSON.stringify(error);
           
         setError(errorMessage || 'Unknown error format');
