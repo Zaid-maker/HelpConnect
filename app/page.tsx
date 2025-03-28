@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { redirect } from 'next/navigation';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Icons for feature section
 const FeatureIcon = ({ children }: { children: React.ReactNode }) => (
@@ -12,8 +13,7 @@ const FeatureIcon = ({ children }: { children: React.ReactNode }) => (
 
 export default async function HomePage() {
   // Check if user is already logged in
-  const cookieStore = cookies();
-  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  const supabase = createServerSupabaseClient();
   const { data: { session } } = await supabase.auth.getSession();
   
   // Redirect to dashboard if already authenticated

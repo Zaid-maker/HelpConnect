@@ -1,12 +1,9 @@
 import LoginForm from '@/components/auth/LoginForm';
-import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { redirect } from 'next/navigation';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export default async function LoginPage() {
-  // Get cookie store and create Supabase client
-  const cookieStore = cookies();
-  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  const supabase = createServerSupabaseClient();
   
   // Check if user is already logged in
   const { data: { session } } = await supabase.auth.getSession();
