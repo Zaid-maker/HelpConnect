@@ -13,8 +13,7 @@ export default async function DashboardPage() {
     redirect('/login');
   }
   
-  // Now that we know the user is authenticated, we can use the Supabase client
-  // for data fetching only (not for auth checks)
+  // Now we can safely use the Supabase client for data fetching only
   const cookieStore = cookies();
   const supabase = createServerComponentClient({ cookies: () => cookieStore });
   

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { checkAuthStatus } from '@/lib/helpers/authCheck';
 
 export default async function SignupPage() {
-  // Check authentication without directly using Supabase client in server component
+  // Check authentication without directly using Supabase
   const { isAuthenticated } = await checkAuthStatus();
   
   if (isAuthenticated) {
