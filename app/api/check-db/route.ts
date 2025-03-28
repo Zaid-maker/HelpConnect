@@ -1,12 +1,14 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+
+// Create a Supabase client with anon key - this avoids cookie issues
+// since we're just checking if tables exist and not accessing authenticated data
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export async function GET() {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    
     // Check profiles table
     const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
@@ -31,16 +33,6 @@ export async function GET() {
       .select('*')
       .limit(1);
     
-    // Try to check RLS policies - this will likely not work with regular permissions
-    // but we'll handle that gracefully
-    let policiesInfo = 'Unable to check policies';
-    try {
-      const { data: policiesData } = await supabase.rpc('get_policies');
-      policiesInfo = policiesData || 'No policy data returned';
-    } catch {
-      // Silently handle RPC failure as this is expected
-    }
-    
     return NextResponse.json({
       tables: {
         profiles: {
@@ -64,7 +56,6 @@ export async function GET() {
           sample: messagesData && messagesData.length > 0
         }
       },
-      policies: policiesInfo,
       success: !profilesError && !requestsError && !offersError && !messagesError
     });
   } catch (error) {
