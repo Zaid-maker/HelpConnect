@@ -1,6 +1,20 @@
 import LoginForm from '@/components/auth/LoginForm';
+import { cookies } from 'next/headers';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { redirect } from 'next/navigation';
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  // Get cookie store and create Supabase client
+  const cookieStore = cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  
+  // Check if user is already logged in
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (session) {
+    redirect('/dashboard');
+  }
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 dark:bg-gray-900">
       <div className="max-w-md w-full space-y-8">
