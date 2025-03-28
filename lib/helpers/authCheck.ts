@@ -1,16 +1,21 @@
-import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-
 export async function checkAuthStatus() {
   try {
-    const cookieStore = cookies();
-    const supabase = createServerComponentClient({ cookies: () => cookieStore });
+    const res = await fetch('/api/auth/check', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      cache: 'no-store'
+    });
     
-    const { data: { session } } = await supabase.auth.getSession();
+    if (!res.ok) {
+      return { isAuthenticated: false, user: null };
+    }
     
-    return { 
-      isAuthenticated: !!session,
-      user: session?.user || null 
+    const data = await res.json();
+    return {
+      isAuthenticated: data.isAuthenticated,
+      user: data.user
     };
   } catch (error) {
     console.error("Error checking auth status:", error);
