@@ -1,14 +1,12 @@
 import LoginForm from '@/components/auth/LoginForm';
 import { redirect } from 'next/navigation';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { checkAuthStatus } from '@/lib/helpers/authCheck';
 
 export default async function LoginPage() {
-  const supabase = createServerSupabaseClient();
+  // Check authentication without directly using Supabase
+  const { isAuthenticated } = await checkAuthStatus();
   
-  // Check if user is already logged in
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  if (session) {
+  if (isAuthenticated) {
     redirect('/dashboard');
   }
   
