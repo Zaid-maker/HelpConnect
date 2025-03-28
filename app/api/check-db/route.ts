@@ -7,36 +7,71 @@ export async function GET() {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     
-    // Check if profiles table exists
-    const { error: profilesError } = await supabase
+    // Check profiles table
+    const { data: profilesData, error: profilesError } = await supabase
       .from('profiles')
-      .select('count')
+      .select('*')
+      .limit(1);
+      
+    // Check help_requests table
+    const { data: requestsData, error: requestsError } = await supabase
+      .from('help_requests')
+      .select('*')
+      .limit(1);
+      
+    // Check offers table
+    const { data: offersData, error: offersError } = await supabase
+      .from('offers')
+      .select('*')
+      .limit(1);
+      
+    // Check messages table
+    const { data: messagesData, error: messagesError } = await supabase
+      .from('messages')
+      .select('*')
       .limit(1);
     
-    // Check if help_requests table exists
-    const { error: helpRequestsError } = await supabase
-      .from('help_requests')
-      .select('count')
-      .limit(1);
+    // Try to check RLS policies - this will likely not work with regular permissions
+    // but we'll handle that gracefully
+    let policiesInfo = 'Unable to check policies';
+    try {
+      const { data: policiesData } = await supabase.rpc('get_policies');
+      policiesInfo = policiesData || 'No policy data returned';
+    } catch {
+      // Silently handle RPC failure as this is expected
+    }
     
     return NextResponse.json({
-      status: 'ok',
-      dbCheck: {
+      tables: {
         profiles: {
           exists: !profilesError,
-          error: profilesError ? profilesError.message : null
+          error: profilesError?.message,
+          sample: profilesData && profilesData.length > 0
         },
-        helpRequests: {
-          exists: !helpRequestsError,
-          error: helpRequestsError ? helpRequestsError.message : null
+        help_requests: {
+          exists: !requestsError,
+          error: requestsError?.message,
+          sample: requestsData && requestsData.length > 0
+        },
+        offers: {
+          exists: !offersError,
+          error: offersError?.message,
+          sample: offersData && offersData.length > 0
+        },
+        messages: {
+          exists: !messagesError,
+          error: messagesError?.message,
+          sample: messagesData && messagesData.length > 0
         }
-      }
+      },
+      policies: policiesInfo,
+      success: !profilesError && !requestsError && !offersError && !messagesError
     });
   } catch (error) {
-    console.error('Error checking database:', error);
-    return NextResponse.json({
-      status: 'error',
-      message: error instanceof Error ? error.message : 'Unknown error checking database'
+    console.error('Database check error:', error);
+    return NextResponse.json({ 
+      error: 'Failed to check database',
+      details: error instanceof Error ? error.message : String(error)
     }, { status: 500 });
   }
 } 
