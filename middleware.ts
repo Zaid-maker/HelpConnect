@@ -19,16 +19,23 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
+  // Redirect to dashboard if already logged in and accessing auth pages
+  if (session && (req.nextUrl.pathname === '/login' || req.nextUrl.pathname === '/signup')) {
+    const redirectUrl = req.nextUrl.clone();
+    redirectUrl.pathname = '/dashboard';
+    return NextResponse.redirect(redirectUrl);
+  }
+
   return res;
 }
 
 export const config = {
   matcher: [
-    // Apply middleware to all routes under (main) group
-    '/(main)/:path*',
-    // And the dashboard route specifically
-    '/dashboard',
-    '/requests/:path*',
+    // Apply middleware to these paths
+    '/dashboard/:path*',
+    '/login',
+    '/signup',
     '/profile/:path*',
+    '/requests/:path*',
   ],
 }; 

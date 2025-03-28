@@ -1,21 +1,15 @@
 import HelpFeed from '@/components/requests/HelpFeed';
 import { HelpRequest } from '@/lib/types';
-import { redirect } from 'next/navigation';
-import { checkAuthStatus } from '@/lib/helpers/authCheck';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
 export default async function DashboardPage() {
-  // Check authentication first
-  const { isAuthenticated, user } = await checkAuthStatus();
-  
-  if (!isAuthenticated) {
-    redirect('/login');
-  }
-  
-  // Now we can safely use the Supabase client for data fetching only
+  // Use the Supabase client for data fetching
   const cookieStore = cookies();
   const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  
+  // Get user session for the user ID
+  const { data: { session } } = await supabase.auth.getSession();
   
   // Fetch help requests
   const { data: helpRequests, error } = await supabase
@@ -48,7 +42,7 @@ export default async function DashboardPage() {
       
       <HelpFeed 
         initialRequests={helpRequests as HelpRequest[] || []} 
-        currentUserId={user?.id} 
+        currentUserId={session?.user?.id} 
       />
     </div>
   );

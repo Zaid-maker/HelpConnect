@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { checkAuthStatus } from '@/lib/helpers/authCheck';
+import Image from 'next/image';
 
 // Icons for feature section
 const FeatureIcon = ({ children }: { children: React.ReactNode }) => (
@@ -9,15 +8,7 @@ const FeatureIcon = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-export default async function HomePage() {
-  // Check if user is already logged in using the helper function
-  const { isAuthenticated } = await checkAuthStatus();
-  
-  // Redirect to dashboard if already authenticated
-  if (isAuthenticated) {
-    redirect('/dashboard');
-  }
-  
+export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -83,10 +74,13 @@ export default async function HomePage() {
               <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
                 <div className="relative mx-auto w-full rounded-lg shadow-lg lg:max-w-md">
                   <div className="relative block w-full bg-white rounded-lg overflow-hidden dark:bg-gray-700">
-                    <img
+                    <Image
                       className="w-full"
                       src="/hero-image.jpg"
                       alt="People helping each other"
+                      width={500}
+                      height={300}
+                      priority
                     />
                   </div>
                 </div>
@@ -186,7 +180,7 @@ export default async function HomePage() {
                       </div>
                     </div>
                     <p className="mt-4 text-gray-500 dark:text-gray-300">
-                      "HelpConnect has transformed how I interact with my community. Now I know who needs help and how I can support them."
+                      &ldquo;HelpConnect has transformed how I interact with my community. Now I know who needs help and how I can support them.&rdquo;
                     </p>
                   </div>
                 </div>
