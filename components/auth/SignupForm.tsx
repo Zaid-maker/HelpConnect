@@ -20,21 +20,24 @@ export default function SignupForm() {
     setLoading(true);
     setError(null);
 
-    // Validate form
-    if (password !== confirmPassword) {
-      setError("Passwords don't match");
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      setLoading(false);
-      return;
-    }
-
     try {
+      console.log('Starting signup process...');
+      
+      // Validate form
+      if (password !== confirmPassword) {
+        setError("Passwords don't match");
+        setLoading(false);
+        return;
+      }
+
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters");
+        setLoading(false);
+        return;
+      }
+
       // Create user in Supabase Auth
+      console.log('Attempting to create auth user...');
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -45,45 +48,80 @@ export default function SignupForm() {
         },
       });
 
-      if (authError) throw authError;
+      console.log('Auth response:', JSON.stringify({ authData, authError }, null, 2));
 
-      if (authData.user) {
-        // Create profile in profiles table
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            username,
-            full_name: fullName,
-          });
+      if (authError) {
+        console.error('Auth error details:', {
+          message: authError.message,
+          name: authError.name,
+          stack: authError.stack,
+          cause: authError.cause,
+          toString: authError.toString()
+        });
+        throw authError;
+      }
 
-        if (profileError) {
-          // If profile creation fails, we should delete the auth user
-          // but Supabase doesn't allow this from client side
-          throw profileError;
-        }
+      if (!authData || !authData.user) {
+        throw new Error('Failed to create user: No user data returned');
+      }
 
-        // Check if email confirmation is required
-        if (authData.user.identities && authData.user.identities.length === 0) {
-          router.push('/signup-success');
-        } else {
-          router.push('/dashboard');
-          router.refresh();
-        }
+      console.log('User created successfully, creating profile...');
+      
+      // Create profile in profiles table
+      const { error: profileError, data: profileData } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          username,
+          full_name: fullName,
+        })
+        .select();
+
+      console.log('Profile creation response:', JSON.stringify({ profileData, profileError }, null, 2));
+
+      if (profileError) {
+        console.error('Profile error details:', {
+          message: profileError.message,
+          code: profileError.code,
+          details: profileError.details,
+          hint: profileError.hint,
+          toString: profileError.toString()
+        });
+        throw profileError;
+      }
+
+      // Check if email confirmation is required
+      if (authData.user.identities && authData.user.identities.length === 0) {
+        console.log('Email confirmation required, redirecting to success page');
+        router.push('/signup-success');
+      } else {
+        console.log('No email confirmation required, redirecting to dashboard');
+        router.push('/dashboard');
+        router.refresh();
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('Signup error details:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error JSON:', JSON.stringify(error, null, 2));
+      console.error('Error props:', Object.keys(error as object).join(', '));
+      
       // Handle different error types properly
       if (error instanceof Error) {
         setError(error.message || 'An error occurred during signup');
       } else if (typeof error === 'object' && error !== null) {
         // For Supabase errors that might be in a different format
         const errorObj = error as Record<string, unknown>;
+        console.log('Error object keys:', Object.keys(errorObj));
+        
+        // Try multiple ways to extract a meaningful error message
         const errorMessage = 
-          typeof errorObj.message === 'string' 
-            ? errorObj.message 
-            : JSON.stringify(error);
-        setError(errorMessage);
+          typeof errorObj.message === 'string' ? errorObj.message :
+          typeof errorObj.error === 'string' ? errorObj.error :
+          typeof errorObj.code === 'string' ? errorObj.code :
+          typeof errorObj.details === 'string' ? errorObj.details :
+          JSON.stringify(error);
+          
+        setError(errorMessage || 'Unknown error format');
       } else {
         setError('An unknown error occurred during signup');
       }
