@@ -73,7 +73,20 @@ export default function SignupForm() {
       }
     } catch (error) {
       console.error('Signup error:', error);
-      setError((error as Error).message);
+      // Handle different error types properly
+      if (error instanceof Error) {
+        setError(error.message || 'An error occurred during signup');
+      } else if (typeof error === 'object' && error !== null) {
+        // For Supabase errors that might be in a different format
+        const errorObj = error as Record<string, unknown>;
+        const errorMessage = 
+          typeof errorObj.message === 'string' 
+            ? errorObj.message 
+            : JSON.stringify(error);
+        setError(errorMessage);
+      } else {
+        setError('An unknown error occurred during signup');
+      }
     } finally {
       setLoading(false);
     }
@@ -91,7 +104,20 @@ export default function SignupForm() {
       if (error) throw error;
     } catch (error) {
       console.error('OAuth error:', error);
-      setError((error as Error).message);
+      // Handle different error types properly
+      if (error instanceof Error) {
+        setError(error.message || 'An error occurred during OAuth sign-in');
+      } else if (typeof error === 'object' && error !== null) {
+        // For Supabase errors that might be in a different format
+        const errorObj = error as Record<string, unknown>;
+        const errorMessage = 
+          typeof errorObj.message === 'string' 
+            ? errorObj.message 
+            : JSON.stringify(error);
+        setError(errorMessage);
+      } else {
+        setError('An unknown error occurred during OAuth sign-in');
+      }
     }
   }
 
