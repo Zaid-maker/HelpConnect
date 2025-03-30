@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 
 export default async function DashboardPage() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   
   // Get auth token from cookies directly
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
