@@ -11,7 +11,8 @@ CREATE TABLE profiles (
   rating NUMERIC(3,2),
   is_verified BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  avatar_url TEXT
 );
 
 -- Help requests table
@@ -86,4 +87,18 @@ CREATE POLICY "Users can delete their own help requests"
   ON help_requests FOR DELETE
   USING (auth.uid() = user_id);
 
--- Similar policies for offers and messages... 
+-- Similar policies for offers and messages...
+
+-- Add messages policies
+CREATE POLICY "Users can read their own messages"
+  ON messages FOR SELECT
+  USING (auth.uid() IN (sender_id, receiver_id));
+
+CREATE POLICY "Users can send messages"
+  ON messages FOR INSERT
+  WITH CHECK (auth.uid() = sender_id);
+
+CREATE POLICY "Users can mark their received messages as read"
+  ON messages FOR UPDATE
+  USING (auth.uid() = receiver_id)
+  WITH CHECK (auth.uid() = receiver_id AND OLD.read = FALSE AND NEW.read = TRUE); 
