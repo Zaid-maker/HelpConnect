@@ -11,14 +11,14 @@ type PageProps = {
 /**
  * Renders the user profile page.
  *
- * This asynchronous server component resolves the provided route parameters to obtain the user ID,
- * verifies the current user's authentication status using Supabase, and fetches the corresponding profile data.
- * If the user is not authenticated or an error occurs during profile retrieval, it either redirects to the login page
- * or displays an error message. When successful, it displays the user's full name and bio with default fallbacks.
+ * This asynchronous server component awaits the route parameters to extract the user ID, checks the current user's
+ * authentication status via Supabase, and retrieves the relevant profile data. If the user is not authenticated,
+ * it redirects to the login page. In case of a profile retrieval error or missing profile, it displays an appropriate
+ * error message. Otherwise, it renders the user's full name, bio, and additional contact and account details.
  *
- * @param params - An object containing the user ID for profile fetching.
+ * @param params - A promise that resolves to an object containing the user ID.
  *
- * @returns A component containing the user's profile details or an error message.
+ * @returns A component displaying the user's profile details or an error message.
  */
 export default async function ProfilePage({ params }: PageProps) {
   const resolvedParams = await params;

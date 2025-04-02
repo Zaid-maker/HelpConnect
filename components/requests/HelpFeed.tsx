@@ -10,6 +10,19 @@ type HelpFeedProps = {
   currentUserId?: string;
 };
 
+/**
+ * Displays and updates a list of community help requests in real time.
+ *
+ * The HelpFeed component renders an initial set of help requests and listens for live updates via a Supabase channel.
+ * It responds to INSERT, UPDATE, and DELETE events on the 'help_requests' table by respectively adding, updating,
+ * or removing requests from its state. When there are no available requests, it displays an informative empty state
+ * with a prompt to create the first request.
+ *
+ * @param initialRequests - The initial array of help request objects.
+ * @param currentUserId - Optional identifier for the current user.
+ *
+ * @returns A React element representing the community help request feed.
+ */
 export default function HelpFeed({ initialRequests, currentUserId }: HelpFeedProps) {
   const [requests, setRequests] = useState<HelpRequest[]>(initialRequests);
 
