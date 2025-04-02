@@ -7,9 +7,9 @@ export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient();
 
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const { data: { user }, error } = await supabase.auth.getUser();
     
-    if (error || !session) {
+    if (error || !user) {
       console.error('Auth error:', error);
       redirect('/login');
     }
@@ -45,7 +45,7 @@ export default async function DashboardPage() {
         
         <HelpFeed 
           initialRequests={helpRequests as HelpRequest[] || []} 
-          currentUserId={session.user.id} 
+          currentUserId={user.id} 
         />
       </div>
     );

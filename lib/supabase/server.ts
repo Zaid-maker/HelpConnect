@@ -3,9 +3,8 @@ import { cookies } from 'next/headers';
 import { cache } from 'react';
 
 // Create a cached version to prevent redundant client creation
-export const createServerSupabaseClient = cache(async () => {
-  const cookieStore = cookies();
+export const createServerSupabaseClient = cache(() => {
   return createServerComponentClient({ 
-    cookies: () => cookieStore 
+    cookies 
   });
 }); 
