@@ -1,16 +1,16 @@
 import HelpFeed from '@/components/requests/HelpFeed';
 import { HelpRequest } from '@/lib/types/index';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardPage() {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServerComponentClient({ cookies });
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { session }, error } = await supabase.auth.getSession();
     
-    if (error || !user) {
-      console.error('Auth error:', error);
+    if (error || !session) {
       redirect('/login');
     }
 
@@ -45,7 +45,7 @@ export default async function DashboardPage() {
         
         <HelpFeed 
           initialRequests={helpRequests as HelpRequest[] || []} 
-          currentUserId={user.id} 
+          currentUserId={session.user.id} 
         />
       </div>
     );
