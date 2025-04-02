@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function SignupForm() {
   const [email, setEmail] = useState('');
@@ -12,32 +13,33 @@ export default function SignupForm() {
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
-      console.log('Starting signup process...');
-      
       // Validate form
       if (password !== confirmPassword) {
-        setError("Passwords don't match");
+        toast.error('Password mismatch', {
+          description: 'The passwords you entered do not match.',
+          duration: 4000,
+        });
         setLoading(false);
         return;
       }
 
       if (password.length < 6) {
-        setError("Password must be at least 6 characters");
+        toast.error('Invalid password', {
+          description: 'Password must be at least 6 characters long.',
+          duration: 4000,
+        });
         setLoading(false);
         return;
       }
 
       // Call our API endpoint to create user and profile
-      console.log('Calling signup API...');
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -52,33 +54,40 @@ export default function SignupForm() {
       });
 
       const data = await response.json();
-      console.log('Signup API response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create account');
       }
 
       // If signup successful, sign in the user
-      console.log('Signup successful, signing in...');
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (signInError) {
-        console.error('Sign in error after signup:', signInError);
         throw signInError;
       }
 
-      console.log('Sign in successful, redirecting to dashboard');
-      router.push('/dashboard');
-      router.refresh();
+      toast.success('Account created successfully!', {
+        description: 'Welcome to HelpConnect. You are now logged in.',
+        duration: 3000,
+      });
+
+      // Wait for the toast to be visible before redirecting
+      setTimeout(() => {
+        router.push('/dashboard');
+        router.refresh();
+      }, 1000);
     } catch (error) {
-      console.error('Signup error details:', error);
+      console.error('Signup error:', error);
       
       // Handle different error types properly
       if (error instanceof Error) {
-        setError(error.message || 'An error occurred during signup');
+        toast.error('Signup failed', {
+          description: error.message || 'An error occurred during signup.',
+          duration: 4000,
+        });
       } else if (typeof error === 'object' && error !== null) {
         // For API errors that might be in a different format
         const errorObj = error as Record<string, unknown>;
@@ -87,9 +96,15 @@ export default function SignupForm() {
           typeof errorObj.error === 'string' ? errorObj.error :
           JSON.stringify(error);
           
-        setError(errorMessage || 'Unknown error format');
+        toast.error('Signup failed', {
+          description: errorMessage || 'Unknown error format',
+          duration: 4000,
+        });
       } else {
-        setError('An unknown error occurred during signup');
+        toast.error('Signup failed', {
+          description: 'An unknown error occurred during signup',
+          duration: 4000,
+        });
       }
     } finally {
       setLoading(false);
@@ -110,7 +125,10 @@ export default function SignupForm() {
       console.error('OAuth error:', error);
       // Handle different error types properly
       if (error instanceof Error) {
-        setError(error.message || 'An error occurred during OAuth sign-in');
+        toast.error('OAuth sign-in failed', {
+          description: error.message || 'An error occurred during OAuth sign-in',
+          duration: 4000,
+        });
       } else if (typeof error === 'object' && error !== null) {
         // For Supabase errors that might be in a different format
         const errorObj = error as Record<string, unknown>;
@@ -118,9 +136,15 @@ export default function SignupForm() {
           typeof errorObj.message === 'string' 
             ? errorObj.message 
             : JSON.stringify(error);
-        setError(errorMessage);
+        toast.error('OAuth sign-in failed', {
+          description: errorMessage,
+          duration: 4000,
+        });
       } else {
-        setError('An unknown error occurred during OAuth sign-in');
+        toast.error('OAuth sign-in failed', {
+          description: 'An unknown error occurred during OAuth sign-in',
+          duration: 4000,
+        });
       }
     }
   }
@@ -128,12 +152,6 @@ export default function SignupForm() {
   return (
     <div className="max-w-md w-full mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800">
       <h2 className="text-2xl font-bold text-center mb-6">Create an Account</h2>
-      
-      {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 dark:bg-red-900/30 dark:text-red-400">
-          {error}
-        </div>
-      )}
       
       <form onSubmit={handleSignUp} className="space-y-4">
         <div>

@@ -4,18 +4,17 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -27,10 +26,22 @@ export default function LoginForm() {
         throw error;
       }
 
-      router.push('/dashboard');
-      router.refresh();
+      toast.success('Welcome back!', {
+        description: 'You have successfully logged in.',
+        duration: 3000,
+      });
+
+      // Wait for the toast to be visible before redirecting
+      setTimeout(() => {
+        router.push('/dashboard');
+        router.refresh();
+      }, 1000);
     } catch (error) {
-      setError((error as Error).message);
+      console.error('Login error:', error);
+      toast.error('Login failed', {
+        description: (error as Error).message || 'Please check your credentials and try again.',
+        duration: 4000,
+      });
     } finally {
       setLoading(false);
     }
@@ -39,12 +50,6 @@ export default function LoginForm() {
   return (
     <div className="max-w-md w-full mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800">
       <h2 className="text-2xl font-bold text-center mb-6">Login to HelpConnect</h2>
-      
-      {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 dark:bg-red-900/30 dark:text-red-400">
-          {error}
-        </div>
-      )}
       
       <form onSubmit={handleSignIn} className="space-y-4">
         <div>
@@ -57,7 +62,7 @@ export default function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full p-2 border rounded-md"
+            className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
           />
         </div>
         
@@ -83,16 +88,16 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+          className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
         >
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
       
-      <div className="mt-4 text-center text-sm">
+      <div className="mt-6 text-center text-sm">
         <p>
-          Don't have an account?{' '}
-          <Link href="/signup" className="text-blue-600 hover:underline">
+          Don&apos;t have an account?{' '}
+          <Link href="/signup" className="text-blue-600 hover:underline dark:text-blue-400">
             Sign up
           </Link>
         </p>
