@@ -1,23 +1,16 @@
 import HelpFeed from '@/components/requests/HelpFeed';
 import { HelpRequest } from '@/lib/types/index';
-import { createClient } from '@supabase/supabase-js';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardPage() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  
-  const supabase = createClient(supabaseUrl, supabaseKey, {
-    auth: {
-      persistSession: false
-    }
-  });
+  const supabase = await createServerSupabaseClient();
 
-  // Simpler auth check using getUser directly
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { session }, error } = await supabase.auth.getSession();
     
-    if (error || !user) {
+    if (error || !session) {
+      console.error('Auth error:', error);
       redirect('/login');
     }
 
@@ -52,13 +45,13 @@ export default async function DashboardPage() {
         
         <HelpFeed 
           initialRequests={helpRequests as HelpRequest[] || []} 
-          currentUserId={user.id} 
+          currentUserId={session.user.id} 
         />
       </div>
     );
     
   } catch (e) {
-    console.error('Auth error:', e);
+    console.error('Unexpected error:', e);
     redirect('/login');
   }
 } 
