@@ -1,5 +1,5 @@
 import HelpFeed from '@/components/requests/HelpFeed';
-import { HelpRequest } from '@/lib/types';
+import { HelpRequest } from '@/lib/types/index';
 import { createClient } from '@supabase/supabase-js';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
