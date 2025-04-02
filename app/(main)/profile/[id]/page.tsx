@@ -4,14 +4,14 @@ import PageContainer from "@/components/layout/PageContainer";
 import Card from "@/components/layout/Card";
 import Heading from "@/components/ui/Heading";
 
-type Props = {
-  params: {
-    id: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
+type PageProps = {
+  params: Promise<{ id: string }>;
 };
 
-export default async function ProfilePage({ params }: Props) {
+export default async function ProfilePage({
+  params,
+}: PageProps) {
+  const resolvedParams = await params;
   const supabase = createServerSupabaseClient();
 
   try {
@@ -28,7 +28,7 @@ export default async function ProfilePage({ params }: Props) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", resolvedParams.id)
       .single();
 
     if (profileError) {
