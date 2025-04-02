@@ -11,30 +11,41 @@ export default function Navigation() {
   const supabase = createClientComponentClient();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 0);
     };
 
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    getUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      subscription.unsubscribe();
+    };
+  }, [supabase.auth]);
 
   const handleSignOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
-      // Clear any local storage or state if needed
-      localStorage.removeItem('supabase.auth.token');
-      
       toast.success('Signed out successfully', {
         description: 'You have been logged out.',
         duration: 3000,
       });
       
-      // Force a hard refresh to clear all state
       window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
@@ -59,46 +70,65 @@ export default function Navigation() {
                 HelpConnect
               </Link>
             </div>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <Link
-                href="/dashboard"
-                className={`${
-                  pathname === '/dashboard'
-                    ? 'border-blue-500 text-gray-900 dark:text-white'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'
-                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200`}
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/requests/new"
-                className={`${
-                  pathname === '/requests/new'
-                    ? 'border-blue-500 text-gray-900 dark:text-white'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'
-                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200`}
-              >
-                New Request
-              </Link>
-              <Link
-                href="/profile"
-                className={`${
-                  pathname === '/profile'
-                    ? 'border-blue-500 text-gray-900 dark:text-white'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'
-                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200`}
-              >
-                Profile
-              </Link>
-            </div>
+            {user && (
+              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                <Link
+                  href="/dashboard"
+                  className={`${
+                    pathname === '/dashboard'
+                      ? 'border-blue-500 text-gray-900 dark:text-white'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200`}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/requests/new"
+                  className={`${
+                    pathname === '/requests/new'
+                      ? 'border-blue-500 text-gray-900 dark:text-white'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200`}
+                >
+                  New Request
+                </Link>
+                <Link
+                  href="/profile"
+                  className={`${
+                    pathname === '/profile'
+                      ? 'border-blue-500 text-gray-900 dark:text-white'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200`}
+                >
+                  Profile
+                </Link>
+              </div>
+            )}
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            <button
-              onClick={handleSignOut}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              Sign Out
-            </button>
+            {user ? (
+              <button
+                onClick={handleSignOut}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <div className="space-x-4">
+                <Link
+                  href="/login"
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                >
+                  Sign up
+                </Link>
+              </div>
+            )}
           </div>
           <div className="-mr-2 flex items-center sm:hidden">
             <button
@@ -154,48 +184,69 @@ export default function Navigation() {
         id="mobile-menu"
       >
         <div className="pt-2 pb-3 space-y-1 bg-white dark:bg-gray-800 shadow-lg">
-          <Link
-            href="/dashboard"
-            className={`${
-              pathname === '/dashboard'
-                ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
-            } block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200`}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/requests/new"
-            className={`${
-              pathname === '/requests/new'
-                ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
-            } block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200`}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            New Request
-          </Link>
-          <Link
-            href="/profile"
-            className={`${
-              pathname === '/profile'
-                ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
-            } block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200`}
-            onClick={() => setIsMobileMenuOpen(false)}
-          >
-            Profile
-          </Link>
-          <button
-            onClick={() => {
-              handleSignOut();
-              setIsMobileMenuOpen(false);
-            }}
-            className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white block w-full text-left pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200"
-          >
-            Sign Out
-          </button>
+          {user ? (
+            <>
+              <Link
+                href="/dashboard"
+                className={`${
+                  pathname === '/dashboard'
+                    ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/requests/new"
+                className={`${
+                  pathname === '/requests/new'
+                    ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                New Request
+              </Link>
+              <Link
+                href="/profile"
+                className={`${
+                  pathname === '/profile'
+                    ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Profile
+              </Link>
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white block w-full text-left pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200"
+              >
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Sign up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
