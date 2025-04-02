@@ -2,6 +2,9 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import NewRequestForm from '@/components/requests/NewRequestForm';
+import PageContainer from '@/components/layout/PageContainer';
+import Card from '@/components/layout/Card';
+import Heading from '@/components/ui/Heading';
 
 export default async function NewRequestPage() {
   const supabase = createServerComponentClient({ cookies });
@@ -13,13 +16,18 @@ export default async function NewRequestPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-          Create New Help Request
-        </h1>
+    <PageContainer>
+      <Card>
+        <div className="mb-8">
+          <Heading level={1}>
+            Create New Help Request
+          </Heading>
+          <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">
+            Describe what kind of help you need from the community
+          </p>
+        </div>
         <NewRequestForm userId={user.id} />
-      </div>
-    </div>
+      </Card>
+    </PageContainer>
   );
 } 
