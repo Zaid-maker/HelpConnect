@@ -2,11 +2,8 @@ import HelpFeed from '@/components/requests/HelpFeed';
 import { HelpRequest } from '@/lib/types/index';
 import { createClient } from '@supabase/supabase-js';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies();
-  
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   
