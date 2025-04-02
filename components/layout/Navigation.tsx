@@ -5,13 +5,14 @@ import { usePathname } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
+import { User } from '@supabase/supabase-js';
 
 export default function Navigation() {
   const pathname = usePathname();
   const supabase = createClientComponentClient();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
