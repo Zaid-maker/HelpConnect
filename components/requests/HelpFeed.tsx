@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import RequestCard from './RequestCard';
-import { HelpRequest } from '@/lib/types';
+import { HelpRequest } from '@/lib/types/index';
 
 type HelpFeedProps = {
   initialRequests: HelpRequest[];
