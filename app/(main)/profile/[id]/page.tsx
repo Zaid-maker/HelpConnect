@@ -1,34 +1,38 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { redirect } from 'next/navigation';
-import PageContainer from '@/components/layout/PageContainer';
-import Card from '@/components/layout/Card';
-import Heading from '@/components/ui/Heading';
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import PageContainer from "@/components/layout/PageContainer";
+import Card from "@/components/layout/Card";
+import Heading from "@/components/ui/Heading";
 
-interface PageProps {
+type Props = {
   params: {
     id: string;
   };
-}
+  searchParams: { [key: string]: string | string[] | undefined };
+};
 
-export default async function ProfilePage({ params }: PageProps) {
+export default async function ProfilePage({ params }: Props) {
   const supabase = createServerSupabaseClient();
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
     if (error || !user) {
-      redirect('/login');
+      redirect("/login");
     }
 
     // Fetch user profile data
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', params.id)
+      .from("profiles")
+      .select("*")
+      .eq("id", params.id)
       .single();
 
     if (profileError) {
-      console.error('Error fetching profile:', profileError);
+      console.error("Error fetching profile:", profileError);
       return (
         <PageContainer>
           <Card>
@@ -47,17 +51,17 @@ export default async function ProfilePage({ params }: PageProps) {
           <Heading level={1}>Profile</Heading>
           <div className="mt-4">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {profile?.full_name || 'Anonymous User'}
+              {profile?.full_name || "Anonymous User"}
             </h2>
             <p className="mt-1 text-gray-600 dark:text-gray-300">
-              {profile?.bio || 'No bio available'}
+              {profile?.bio || "No bio available"}
             </p>
           </div>
         </Card>
       </PageContainer>
     );
   } catch (e) {
-    console.error('Unexpected error:', e);
-    redirect('/login');
+    console.error("Unexpected error:", e);
+    redirect("/login");
   }
-} 
+}
