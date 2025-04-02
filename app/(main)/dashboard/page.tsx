@@ -8,6 +8,16 @@ import Card from '@/components/layout/Card';
 import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
 
+/**
+ * Renders the dashboard page for authenticated users.
+ *
+ * This asynchronous server component checks for a logged-in user using a Supabase client.
+ * If the user is not authenticated or an authentication error occurs, it redirects to the login page.
+ * Once authenticated, it fetches up to 20 recent help requests from the database and renders a dashboard
+ * that includes a welcome message and a help request feed.
+ *
+ * @returns A JSX element representing the dashboard page.
+ */
 export default async function DashboardPage() {
   const supabase = createServerComponentClient({ 
     cookies 

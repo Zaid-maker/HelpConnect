@@ -4,6 +4,17 @@ import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
+/**
+ * Renders a button that opens a modal for composing and sending a message.
+ *
+ * When the "Send Message" button is clicked, a modal appears with a textarea for input and options to cancel
+ * or send the message. If the message is empty after trimming, an error toast notifies the user. Otherwise, the message
+ * is sent using a Supabase client, and the user is informed of success or failure via toast notifications.
+ *
+ * @param recipientId - The identifier of the message recipient.
+ *
+ * @returns A React element that provides the message composition and sending interface.
+ */
 export default function MessageButton({ recipientId }: { recipientId: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');

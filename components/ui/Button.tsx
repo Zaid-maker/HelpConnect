@@ -11,6 +11,20 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   className?: string;
 }
 
+/**
+ * Renders a styled clickable element that functions as either a button or a link.
+ *
+ * When the `href` prop is provided, the component renders as a Next.js `<Link>` component, enabling navigation.
+ * Otherwise, it renders as a standard HTML `<button>` element. Styling is dynamically determined by the `variant`
+ * and `size` props—with defaults of "primary" and "md" respectively—and can be further customized via the `className`
+ * prop. Any additional props are passed to the `<button>` element when rendered.
+ *
+ * @param variant - Determines the visual style; allowed values are "primary", "secondary", or "outline". Defaults to "primary".
+ * @param size - Specifies the size of the button; allowed values are "sm", "md", or "lg". Defaults to "md".
+ * @param href - Optional URL. If provided, renders the component as a link.
+ * @param children - The content displayed inside the button.
+ * @param className - Additional CSS classes for custom styling.
+ */
 export default function Button({
   variant = 'primary',
   size = 'md',

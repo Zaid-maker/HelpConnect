@@ -5,6 +5,14 @@ import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
+/**
+ * Renders a password reset request form.
+ *
+ * This component displays a form where users can request a password reset by providing their
+ * email address. It manages the email input and loading state, handles form submission by calling
+ * the authentication service to send a reset link, and uses toast notifications to inform the user
+ * of success or failure.
+ */
 export default function PasswordResetRequestForm() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
