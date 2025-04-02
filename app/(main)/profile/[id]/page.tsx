@@ -4,11 +4,9 @@ import PageContainer from "@/components/layout/PageContainer";
 import Card from "@/components/layout/Card";
 import Heading from "@/components/ui/Heading";
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
 
 /**
  * Renders the user profile page.
@@ -22,27 +20,29 @@ interface PageProps {
  *
  * @returns A component containing the user's profile details or an error message.
  */
-export default async function ProfilePage({
-  params,
-}: PageProps) {
+export default async function ProfilePage({ params }: PageProps) {
+  const resolvedParams = await params;
   const supabase = createServerSupabaseClient();
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
     if (error || !user) {
-      redirect('/login');
+      redirect("/login");
     }
 
     // Fetch user profile data
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', params.id)
+      .from("profiles")
+      .select("*")
+      .eq("id", resolvedParams.id)
       .single();
 
     if (profileError) {
-      console.error('Error fetching profile:', profileError);
+      console.error("Error fetching profile:", profileError);
       return (
         <PageContainer>
           <Card>
@@ -74,29 +74,29 @@ export default async function ProfilePage({
       <PageContainer>
         <Card>
           <div className="mb-6">
-            <Heading level={1}>
-              {profile.full_name || 'User Profile'}
-            </Heading>
+            <Heading level={1}>{profile.full_name || "User Profile"}</Heading>
             <p className="mt-2 text-gray-600 dark:text-gray-300">
-              {profile.bio || 'No bio available'}
+              {profile.bio || "No bio available"}
             </p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <h2 className="text-lg font-semibold mb-4">Contact Information</h2>
+              <h2 className="text-lg font-semibold mb-4">
+                Contact Information
+              </h2>
               <div className="space-y-2">
                 <p>
-                  <span className="font-medium">Email:</span>{' '}
-                  {profile.email || 'Not provided'}
+                  <span className="font-medium">Email:</span>{" "}
+                  {profile.email || "Not provided"}
                 </p>
                 <p>
-                  <span className="font-medium">Phone:</span>{' '}
-                  {profile.phone || 'Not provided'}
+                  <span className="font-medium">Phone:</span>{" "}
+                  {profile.phone || "Not provided"}
                 </p>
                 <p>
-                  <span className="font-medium">Location:</span>{' '}
-                  {profile.location || 'Not provided'}
+                  <span className="font-medium">Location:</span>{" "}
+                  {profile.location || "Not provided"}
                 </p>
               </div>
             </div>
@@ -105,11 +105,11 @@ export default async function ProfilePage({
               <h2 className="text-lg font-semibold mb-4">Account Details</h2>
               <div className="space-y-2">
                 <p>
-                  <span className="font-medium">Member since:</span>{' '}
+                  <span className="font-medium">Member since:</span>{" "}
                   {new Date(profile.created_at).toLocaleDateString()}
                 </p>
                 <p>
-                  <span className="font-medium">Last updated:</span>{' '}
+                  <span className="font-medium">Last updated:</span>{" "}
                   {new Date(profile.updated_at).toLocaleDateString()}
                 </p>
               </div>
@@ -119,7 +119,7 @@ export default async function ProfilePage({
       </PageContainer>
     );
   } catch (e) {
-    console.error('Unexpected error:', e);
-    redirect('/login');
+    console.error("Unexpected error:", e);
+    redirect("/login");
   }
 }
