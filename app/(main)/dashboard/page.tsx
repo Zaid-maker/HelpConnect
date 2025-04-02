@@ -5,12 +5,14 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardPage() {
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = createServerComponentClient({ 
+    cookies 
+  });
 
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const { data: { user }, error } = await supabase.auth.getUser();
     
-    if (error || !session) {
+    if (error || !user) {
       redirect('/login');
     }
 
@@ -45,7 +47,7 @@ export default async function DashboardPage() {
         
         <HelpFeed 
           initialRequests={helpRequests as HelpRequest[] || []} 
-          currentUserId={session.user.id} 
+          currentUserId={user.id} 
         />
       </div>
     );
