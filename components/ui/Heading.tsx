@@ -8,6 +8,19 @@ interface HeadingProps {
   className?: string;
 }
 
+/**
+ * Renders a semantic heading element with dynamic sizing and custom styles.
+ *
+ * The component selects an HTML heading (h1–h6) based on the provided `level` prop, applies
+ * base typography styles along with a size-specific class, and merges any additional classes
+ * from the `className` prop.
+ *
+ * @param level - Optional heading level (1 to 6) that determines both the element type and text size. Defaults to 1.
+ * @param children - The content to be rendered within the heading.
+ * @param className - Optional additional CSS classes for custom styling.
+ *
+ * @returns A React element representing the styled heading.
+ */
 export default function Heading({ level = 1, children, className = '' }: HeadingProps) {
   const baseStyles = 'font-bold text-gray-900 dark:text-white';
   

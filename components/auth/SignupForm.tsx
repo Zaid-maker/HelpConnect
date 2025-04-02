@@ -6,6 +6,19 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
+/**
+ * Renders the signup form for creating a new account.
+ *
+ * This component displays a form that collects a user's full name, username, email, and password (with confirmation). 
+ * It validates that the password meets a minimum length and matches the confirmation before sending a signup request 
+ * to the API endpoint. If the signup is successful, it automatically signs the user in via Supabase authentication 
+ * and redirects to the dashboard after displaying a success message. Additionally, the component supports OAuth 
+ * sign-in with Google or GitHub.
+ *
+ * Toast notifications are used to provide user feedback for both success and error conditions during the signup process.
+ *
+ * @returns The JSX element representing the signup form.
+ */
 export default function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

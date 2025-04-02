@@ -23,6 +23,13 @@ const URGENCY_LEVELS = [
   { value: 'high', label: 'High - Immediate assistance needed' }
 ];
 
+/**
+ * Renders a form to create a new help request.
+ *
+ * This component displays a structured form that gathers details such as the request title, description, category, urgency level, and location. Upon submission, it sends the form data to a Supabase database. If the insertion is successful, a success toast is shown and the user is redirected to the dashboard after a brief delay; if not, an error toast is displayed.
+ *
+ * @param userId - The identifier for the user submitting the help request.
+ */
 export default function NewRequestForm({ userId }: { userId: string }) {
   const router = useRouter();
   const supabase = createClientComponentClient();

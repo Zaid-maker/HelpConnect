@@ -11,6 +11,15 @@ const FeatureIcon = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+/**
+ * Renders the HelpConnect homepage.
+ *
+ * This asynchronous server component initializes a Supabase client using cookies to retrieve
+ * the authenticated user and conditionally displays navigation, hero, features, testimonials,
+ * and call-to-action sections based on the user's login status.
+ *
+ * @returns A JSX element representing the homepage layout.
+ */
 export default async function Home() {
   const supabase = createServerComponentClient({ cookies });
 

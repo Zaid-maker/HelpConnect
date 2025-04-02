@@ -5,6 +5,16 @@ import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
+/**
+ * Renders a password reset form that allows users to update their password.
+ *
+ * The component performs a check on mount to verify the validity of the password reset link via session retrieval.
+ * Upon submitting the form, it validates that the new password matches its confirmation and meets the minimum length
+ * requirement before attempting to update the password using Supabase auth. Notifications for errors and successful updates
+ * are displayed using toast messages, and a successful update triggers a redirect to the login page.
+ *
+ * @returns A JSX element that displays the password reset form.
+ */
 export default function PasswordResetForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

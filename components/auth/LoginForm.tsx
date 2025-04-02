@@ -6,6 +6,16 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
+/**
+ * Renders a responsive login form for user authentication.
+ *
+ * The component displays a form that collects the user's email and password. Upon submission, it attempts to sign
+ * in the user via Supabase. If the login is successful, a success toast is shown and the user is redirected to the
+ * dashboard after a short delay. If an error occurs during authentication, the error is logged and an error toast
+ * is displayed.
+ *
+ * @returns The rendered login form component.
+ */
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
