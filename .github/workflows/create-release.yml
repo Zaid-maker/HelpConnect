@@ -1,0 +1,145 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_strategy:
+        description: 'Version increment strategy'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: 'patch'
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  discussions: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate version
+        if: github.event_name == 'workflow_dispatch'
+        id: version
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          CURRENT_VERSION=${LATEST_TAG#v}
+          IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+          
+          case "${{ github.event.inputs.version_strategy }}" in
+            major)
+              NEW_VERSION="$((major + 1)).0.0"
+              ;;
+            minor)
+              NEW_VERSION="${major}.$((minor + 1)).0"
+              ;;
+            patch)
+              NEW_VERSION="${major}.${minor}.$((patch + 1))"
+              ;;
+          esac
+          
+          echo "new_version=v${NEW_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Update package.json version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.new_version }}"
+          NEW_VERSION_NO_V="${NEW_VERSION#v}"
+          npm version $NEW_VERSION_NO_V --no-git-tag-version
+
+      - name: Commit and push changes
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name Zaid-maker
+          git config user.email 53424436+Zaid-maker@users.noreply.github.com
+          git add package.json
+          git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}"
+          git push origin HEAD:main
+          git tag ${{ steps.version.outputs.new_version }}
+          git push origin ${{ steps.version.outputs.new_version }}
+
+      - name: Get changes
+        id: get_changes
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          # Get commit changes
+          if [ -z "$PREV_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" ${{ github.ref_name }})
+          else
+            COMMITS=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..${{ github.ref_name }})
+          fi
+          
+          # Get PR changes
+          if [ -n "$PREV_TAG" ]; then
+            PRS=$(gh pr list --search "merged:>=$(git show -s --format=%ci $PREV_TAG) base:main" --json title,number,url --template \
+              '{{range .}}- {{.title}} (#{{.number}}){{"\n"}}{{end}}' || echo "")
+          else
+            PRS=""
+          fi
+          
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          if [ -n "$COMMITS" ]; then
+            echo "$COMMITS" >> $GITHUB_OUTPUT
+          else
+            echo "No direct commits in this release" >> $GITHUB_OUTPUT
+          fi
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "prs<<EOF" >> $GITHUB_OUTPUT
+          if [ -n "$PRS" ]; then
+            echo "$PRS" >> $GITHUB_OUTPUT
+          else
+            echo "No pull requests merged in this release" >> $GITHUB_OUTPUT
+          fi
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && steps.version.outputs.new_version || github.ref_name }}
+          name: "🚀 Release ${{ github.event_name == 'workflow_dispatch' && steps.version.outputs.new_version || github.ref_name }} 🎉"
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          fail_on_unmatched_files: true
+          body: |
+            ## 🎯 Release ${{ github.event_name == 'workflow_dispatch' && steps.version.outputs.new_version || github.ref_name }}
+
+            _This release was ${{ github.event_name == 'workflow_dispatch' && 'created automatically via GitHub Actions' || 'pushed locally by a developer' }}_
+
+            ### 📦 Pull Request Changes
+            ${{ steps.get_changes.outputs.prs }}
+
+            ### 💻 Commit Changes
+            ${{ steps.get_changes.outputs.commits }}
+            
+            ### 🔄 Additional Information
+            - Release Date: ${{ steps.date.outputs.date }}
+            - Author: ${{ github.actor }}
+            
+            ### 🔗 Links
+            - [Full Changelog](${{ github.server_url }}/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.ref_name }})
+            - [Release Discussion](${{ github.server_url }}/${{ github.repository }}/discussions)
+            
+            ### 🙏 Thank you
+            Thanks for using our application! If you find any issues, please report them on our [issues page](${{ github.server_url }}/${{ github.repository }}/issues).
