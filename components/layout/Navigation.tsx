@@ -3,13 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const router = useRouter();
   const supabase = createClientComponentClient();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -28,13 +26,16 @@ export default function Navigation() {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      // Clear any local storage or state if needed
+      localStorage.removeItem('supabase.auth.token');
+      
       toast.success('Signed out successfully', {
         description: 'You have been logged out.',
         duration: 3000,
       });
       
-      router.push('/');
-      router.refresh();
+      // Force a hard refresh to clear all state
+      window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
       toast.error('Failed to sign out', {
