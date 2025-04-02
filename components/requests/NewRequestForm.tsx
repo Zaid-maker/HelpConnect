@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Button from '@/components/ui/Button';
+import { toast } from 'sonner';
 
 const CATEGORIES = [
   'General Help',
@@ -26,12 +27,10 @@ export default function NewRequestForm({ userId }: { userId: string }) {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
 
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -51,11 +50,24 @@ export default function NewRequestForm({ userId }: { userId: string }) {
 
       if (error) throw error;
 
-      router.push('/dashboard');
-      router.refresh();
+      // Show success toast
+      toast.success('Help request created successfully!', {
+        description: 'Your request has been posted and is now visible to the community.',
+        duration: 3000,
+      });
+
+      // Wait for the toast to be visible before redirecting
+      setTimeout(() => {
+        router.push('/dashboard');
+        router.refresh();
+      }, 1000);
+
     } catch (err) {
       console.error('Error creating request:', err);
-      setError('Failed to create request. Please try again.');
+      toast.error('Failed to create request', {
+        description: 'There was an error creating your help request. Please try again.',
+        duration: 4000,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -63,12 +75,6 @@ export default function NewRequestForm({ userId }: { userId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-200 p-4 rounded-lg border border-red-200 dark:border-red-800">
-          {error}
-        </div>
-      )}
-
       <div className="space-y-2">
         <label htmlFor="title" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
           Title
