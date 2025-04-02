@@ -12,7 +12,6 @@ type HelpFeedProps = {
 
 export default function HelpFeed({ initialRequests, currentUserId }: HelpFeedProps) {
   const [requests, setRequests] = useState<HelpRequest[]>(initialRequests);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setRequests(initialRequests);
@@ -72,9 +71,7 @@ export default function HelpFeed({ initialRequests, currentUserId }: HelpFeedPro
     <div className="space-y-4">
       <h2 className="text-xl font-bold mb-4">Community Help Requests</h2>
       
-      {loading ? (
-        <div className="text-center py-10">Loading requests...</div>
-      ) : requests.length === 0 ? (
+      {requests.length === 0 ? (
         <div className="text-center py-10 bg-gray-50 rounded-lg dark:bg-gray-800">
           <p className="text-gray-500 dark:text-gray-400">
             No help requests at the moment.

@@ -2,7 +2,6 @@
 
 import { HelpRequest } from '@/lib/types/index';
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 type RequestCardProps = {
