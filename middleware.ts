@@ -2,6 +2,16 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+/**
+ * Handles authentication redirection for protected and auth-related routes in a Next.js application.
+ *
+ * This middleware utilizes a Supabase client to determine the user's authentication status and enforces:
+ * - A redirection to '/login' for unauthenticated users or when an error is encountered while accessing '/dashboard' routes.
+ * - A redirection to '/dashboard' for authenticated users attempting to access the '/login' or '/signup' pages.
+ *
+ * @param req - The incoming NextRequest object.
+ * @returns A NextResponse object that either continues processing or redirects based on authentication status.
+ */
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });

@@ -7,6 +7,14 @@ import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 
+/**
+ * Renders the application navigation bar with responsive styling and authentication-aware links.
+ *
+ * The component adjusts its appearance based on the scroll position and displays different navigation options
+ * depending on whether a user is authenticated. Authenticated users see links for Dashboard, New Request, Profile,
+ * and a Sign Out button, while unauthenticated users are offered Log in and Sign up options. Additionally, it
+ * manages a collapsible mobile menu for smaller screens.
+ */
 export default function Navigation() {
   const pathname = usePathname();
   const supabase = createClientComponentClient();

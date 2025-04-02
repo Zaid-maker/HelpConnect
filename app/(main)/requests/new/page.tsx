@@ -6,6 +6,16 @@ import PageContainer from '@/components/layout/PageContainer';
 import Card from '@/components/layout/Card';
 import Heading from '@/components/ui/Heading';
 
+/**
+ * Renders a page for creating a new help request.
+ *
+ * This asynchronous server-side component uses a Supabase client with cookies to retrieve the authenticated user.
+ * If the user is not authenticated or an error occurs during authentication, it redirects to the "/login" page.
+ * When authenticated, it displays a page container with a card that includes a heading, description, and a form
+ * for submitting a new help request using the authenticated user's ID.
+ *
+ * @returns The JSX structure for the new help request page.
+ */
 export default async function NewRequestPage() {
   const supabase = createServerComponentClient({ cookies });
 
