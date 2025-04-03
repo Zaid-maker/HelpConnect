@@ -22,6 +22,13 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  /**
+   * Handles user sign-in via form submission using Supabase authentication.
+   *
+   * Prevents the default submission behavior, enables a loading state, and attempts to authenticate the user with the provided email and password. On success, it displays a success toast and, after a brief delay, redirects the user to the dashboard. On failure, it logs the error and shows an error toast with the relevant message.
+   *
+   * @param e - The form submission event.
+   */
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);

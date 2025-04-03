@@ -37,6 +37,15 @@ export default function PasswordResetForm() {
     handlePasswordReset();
   }, []);
 
+  /**
+   * Handles the password update process from the reset form.
+   *
+   * This asynchronous function first prevents the default form submission behavior and then validates that the new password matches its confirmation and meets
+   * the minimum length requirement of 6 characters. If validation succeeds, it attempts to update the user's password using Supabase authentication. Success and error
+   * feedback are provided via toast notifications, with a successful update triggering a redirect to the login page.
+   *
+   * @param e - The form submission event.
+   */
   async function handlePasswordUpdate(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
