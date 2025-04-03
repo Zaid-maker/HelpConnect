@@ -1,9 +1,23 @@
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps {
   label: string;
   error?: string;
+  name: string;
+  type?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  required?: boolean;
+  className?: string;
+  disabled?: boolean;
 }
 
-export default function Input({ label, error, className = '', ...props }: InputProps) {
+export default function Input({ 
+  label, 
+  error, 
+  className = '', 
+  value = '', 
+  ...props 
+}: InputProps) {
   return (
     <div className="space-y-1">
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -18,6 +32,7 @@ export default function Input({ label, error, className = '', ...props }: InputP
           ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
           ${className}
         `}
+        value={value}
         {...props}
       />
       {error && (

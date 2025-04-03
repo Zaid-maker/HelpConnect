@@ -1,9 +1,22 @@
-interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface TextareaProps {
   label: string;
   error?: string;
+  name: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  rows?: number;
+  className?: string;
+  disabled?: boolean;
 }
 
-export default function Textarea({ label, error, className = '', ...props }: TextareaProps) {
+export default function Textarea({ 
+  label, 
+  error, 
+  className = '', 
+  value = '', 
+  ...props 
+}: TextareaProps) {
   return (
     <div className="space-y-1">
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -18,6 +31,7 @@ export default function Textarea({ label, error, className = '', ...props }: Tex
           ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
           ${className}
         `}
+        value={value}
         {...props}
       />
       {error && (

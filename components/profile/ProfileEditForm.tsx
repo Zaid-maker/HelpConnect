@@ -12,10 +12,10 @@ interface Profile {
   id: string;
   full_name: string;
   username: string;
-  bio: string;
-  phone: string;
-  location: string;
-  avatar_url: string;
+  bio: string | null;
+  phone: string | null;
+  location: string | null;
+  avatar_url: string | null;
 }
 
 interface ProfileEditFormProps {
@@ -26,7 +26,13 @@ export default function ProfileEditForm({ initialProfile }: ProfileEditFormProps
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [isLoading, setIsLoading] = useState(false);
-  const [profile, setProfile] = useState<Profile>(initialProfile);
+  const [profile, setProfile] = useState<Profile>({
+    ...initialProfile,
+    bio: initialProfile.bio || '',
+    phone: initialProfile.phone || '',
+    location: initialProfile.location || '',
+    avatar_url: initialProfile.avatar_url || '',
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,9 +44,9 @@ export default function ProfileEditForm({ initialProfile }: ProfileEditFormProps
         .update({
           full_name: profile.full_name,
           username: profile.username,
-          bio: profile.bio,
-          phone: profile.phone,
-          location: profile.location,
+          bio: profile.bio || null,
+          phone: profile.phone || null,
+          location: profile.location || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', profile.id);
@@ -97,7 +103,7 @@ export default function ProfileEditForm({ initialProfile }: ProfileEditFormProps
         <Textarea
           label="Bio"
           name="bio"
-          value={profile.bio}
+          value={profile.bio || ''}
           onChange={handleChange}
           rows={4}
           placeholder="Tell us about yourself..."
@@ -110,7 +116,7 @@ export default function ProfileEditForm({ initialProfile }: ProfileEditFormProps
             label="Phone Number"
             name="phone"
             type="tel"
-            value={profile.phone}
+            value={profile.phone || ''}
             onChange={handleChange}
             placeholder="+1 (555) 555-5555"
           />
@@ -119,7 +125,7 @@ export default function ProfileEditForm({ initialProfile }: ProfileEditFormProps
           <Input
             label="Location"
             name="location"
-            value={profile.location}
+            value={profile.location || ''}
             onChange={handleChange}
             placeholder="City, Country"
           />
