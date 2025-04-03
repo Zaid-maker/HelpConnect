@@ -20,10 +20,11 @@ export default function Input({
 }: InputProps) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+      <label htmlFor={props.name} className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
         {label}
       </label>
       <input
+        id={props.name}
         className={`
           block w-full px-4 py-3 rounded-lg border border-gray-300 
           shadow-sm bg-white dark:bg-gray-700 

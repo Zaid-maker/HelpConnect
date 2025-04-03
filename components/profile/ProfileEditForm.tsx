@@ -13,9 +13,13 @@ interface Profile {
   full_name: string;
   username: string;
   bio: string | null;
-  phone: string | null;
   location: string | null;
   avatar_url: string | null;
+  skills: string[];
+  rating: number | null;
+  is_verified: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ProfileEditFormProps {
@@ -29,9 +33,11 @@ export default function ProfileEditForm({ initialProfile }: ProfileEditFormProps
   const [profile, setProfile] = useState<Profile>({
     ...initialProfile,
     bio: initialProfile.bio || '',
-    phone: initialProfile.phone || '',
     location: initialProfile.location || '',
     avatar_url: initialProfile.avatar_url || '',
+    skills: initialProfile.skills || [],
+    rating: initialProfile.rating || null,
+    is_verified: initialProfile.is_verified || false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,19 +45,32 @@ export default function ProfileEditForm({ initialProfile }: ProfileEditFormProps
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .update({
           full_name: profile.full_name,
           username: profile.username,
           bio: profile.bio || null,
-          phone: profile.phone || null,
           location: profile.location || null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', profile.id);
+        .eq('id', profile.id)
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw new Error(error.message || 'Failed to update profile');
+      }
+
+      if (!data) {
+        throw new Error('No data returned from update');
+      }
 
       toast.success('Profile updated successfully', {
         description: 'Your profile has been updated.',
@@ -62,8 +81,14 @@ export default function ProfileEditForm({ initialProfile }: ProfileEditFormProps
       router.refresh();
     } catch (error) {
       console.error('Error updating profile:', error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : typeof error === 'object' && error !== null && 'message' in error
+          ? String(error.message)
+          : 'There was an error updating your profile. Please try again.';
+          
       toast.error('Failed to update profile', {
-        description: 'There was an error updating your profile. Please try again.',
+        description: errorMessage,
         duration: 4000,
       });
     } finally {
@@ -110,26 +135,14 @@ export default function ProfileEditForm({ initialProfile }: ProfileEditFormProps
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div>
-          <Input
-            label="Phone Number"
-            name="phone"
-            type="tel"
-            value={profile.phone || ''}
-            onChange={handleChange}
-            placeholder="+1 (555) 555-5555"
-          />
-        </div>
-        <div>
-          <Input
-            label="Location"
-            name="location"
-            value={profile.location || ''}
-            onChange={handleChange}
-            placeholder="City, Country"
-          />
-        </div>
+      <div>
+        <Input
+          label="Location"
+          name="location"
+          value={profile.location || ''}
+          onChange={handleChange}
+          placeholder="City, Country"
+        />
       </div>
 
       <div className="flex justify-end space-x-4 pt-4">
