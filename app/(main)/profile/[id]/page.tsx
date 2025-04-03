@@ -1,68 +1,125 @@
-import { createClient } from '@supabase/supabase-js';
-import Image from 'next/image';
-import { notFound } from 'next/navigation';
-import MessageButton from '@/components/messaging/MessageButton';
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import PageContainer from "@/components/layout/PageContainer";
+import Card from "@/components/layout/Card";
+import Heading from "@/components/ui/Heading";
 
-export default async function ProfilePage({ params }: { params: { id: string } }) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*, help_requests(*)')
-    .eq('id', params.id)
-    .single();
+/**
+ * Renders the user profile page.
+ *
+ * This asynchronous server component awaits the route parameters to extract the user ID, checks the current user's
+ * authentication status via Supabase, and retrieves the relevant profile data. If the user is not authenticated,
+ * it redirects to the login page. In case of a profile retrieval error or missing profile, it displays an appropriate
+ * error message. Otherwise, it renders the user's full name, bio, and additional contact and account details.
+ *
+ * @param params - A promise that resolves to an object containing the user ID.
+ *
+ * @returns A component displaying the user's profile details or an error message.
+ */
+export default async function ProfilePage({ params }: PageProps) {
+  const resolvedParams = await params;
+  const supabase = createServerSupabaseClient();
 
-  if (error || !profile) {
-    return notFound();
-  }
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
 
-  return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-        <div className="p-6">
-          <div className="flex items-center space-x-6">
-            <div className="relative h-24 w-24">
-              <Image
-                src={profile.avatar_url || '/default-avatar.png'}
-                alt={profile.username}
-                fill
-                className="rounded-full object-cover"
-              />
+    if (error || !user) {
+      redirect("/login");
+    }
+
+    // Fetch user profile data
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", resolvedParams.id)
+      .single();
+
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+      return (
+        <PageContainer>
+          <Card>
+            <div className="text-center py-8">
+              <p className="text-red-600 dark:text-red-400">
+                Error loading profile. Please try again later.
+              </p>
             </div>
+          </Card>
+        </PageContainer>
+      );
+    }
+
+    if (!profile) {
+      return (
+        <PageContainer>
+          <Card>
+            <div className="text-center py-8">
+              <p className="text-gray-600 dark:text-gray-400">
+                Profile not found.
+              </p>
+            </div>
+          </Card>
+        </PageContainer>
+      );
+    }
+
+    return (
+      <PageContainer>
+        <Card>
+          <div className="mb-6">
+            <Heading level={1}>{profile.full_name || "User Profile"}</Heading>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">
+              {profile.bio || "No bio available"}
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <h1 className="text-2xl font-bold">{profile.full_name}</h1>
-              <p className="text-gray-600 dark:text-gray-300">@{profile.username}</p>
-              <div className="mt-2 flex items-center">
-                <span className="text-yellow-500">★</span>
-                <span className="ml-1">{profile.rating || 'No ratings yet'}</span>
+              <h2 className="text-lg font-semibold mb-4">
+                Contact Information
+              </h2>
+              <div className="space-y-2">
+                <p>
+                  <span className="font-medium">Email:</span>{" "}
+                  {profile.email || "Not provided"}
+                </p>
+                <p>
+                  <span className="font-medium">Phone:</span>{" "}
+                  {profile.phone || "Not provided"}
+                </p>
+                <p>
+                  <span className="font-medium">Location:</span>{" "}
+                  {profile.location || "Not provided"}
+                </p>
               </div>
             </div>
-            <MessageButton recipientId={profile.id} />
-          </div>
-          
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold">About</h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-300">{profile.bio}</p>
-          </div>
 
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold">Skills</h2>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {profile.skills?.map((skill: string) => (
-                <span
-                  key={skill}
-                  className="px-3 py-1 bg-blue-100 dark:bg-blue-900 rounded-full text-sm"
-                >
-                  {skill}
-                </span>
-              ))}
+            <div>
+              <h2 className="text-lg font-semibold mb-4">Account Details</h2>
+              <div className="space-y-2">
+                <p>
+                  <span className="font-medium">Member since:</span>{" "}
+                  {new Date(profile.created_at).toLocaleDateString()}
+                </p>
+                <p>
+                  <span className="font-medium">Last updated:</span>{" "}
+                  {new Date(profile.updated_at).toLocaleDateString()}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  );
-} 
+        </Card>
+      </PageContainer>
+    );
+  } catch (e) {
+    console.error("Unexpected error:", e);
+    redirect("/login");
+  }
+}

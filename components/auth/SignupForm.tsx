@@ -4,7 +4,21 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
+/**
+ * Renders the signup form for creating a new account.
+ *
+ * This component displays a form that collects a user's full name, username, email, and password (with confirmation). 
+ * It validates that the password meets a minimum length and matches the confirmation before sending a signup request 
+ * to the API endpoint. If the signup is successful, it automatically signs the user in via Supabase authentication 
+ * and redirects to the dashboard after displaying a success message. Additionally, the component supports OAuth 
+ * sign-in with Google or GitHub.
+ *
+ * Toast notifications are used to provide user feedback for both success and error conditions during the signup process.
+ *
+ * @returns The JSX element representing the signup form.
+ */
 export default function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -12,32 +26,46 @@ export default function SignupForm() {
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  /**
+   * Processes the signup form submission to create a new user account.
+   *
+   * This function prevents the default form submission behavior and validates that the
+   * password and confirmation match, and that the password meets a minimum length of 6 characters.
+   * If the validations fail, it displays appropriate toast error notifications and stops further execution.
+   * It then sends a POST request to the signup API endpoint with the user's email, password, username,
+   * and full name. On a successful signup, it automatically signs the user in via Supabase, shows a success
+   * toast notification, and redirects the user to the dashboard after a brief delay. In case of any errors
+   * during the signup or sign-in process, an error toast notification is shown.
+   *
+   * @param e - The event triggered by the form submission.
+   */
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
-      console.log('Starting signup process...');
-      
       // Validate form
       if (password !== confirmPassword) {
-        setError("Passwords don't match");
+        toast.error('Password mismatch', {
+          description: 'The passwords you entered do not match.',
+          duration: 4000,
+        });
         setLoading(false);
         return;
       }
 
       if (password.length < 6) {
-        setError("Password must be at least 6 characters");
+        toast.error('Invalid password', {
+          description: 'Password must be at least 6 characters long.',
+          duration: 4000,
+        });
         setLoading(false);
         return;
       }
 
       // Call our API endpoint to create user and profile
-      console.log('Calling signup API...');
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -52,33 +80,40 @@ export default function SignupForm() {
       });
 
       const data = await response.json();
-      console.log('Signup API response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create account');
       }
 
       // If signup successful, sign in the user
-      console.log('Signup successful, signing in...');
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (signInError) {
-        console.error('Sign in error after signup:', signInError);
         throw signInError;
       }
 
-      console.log('Sign in successful, redirecting to dashboard');
-      router.push('/dashboard');
-      router.refresh();
+      toast.success('Account created successfully!', {
+        description: 'Welcome to HelpConnect. You are now logged in.',
+        duration: 3000,
+      });
+
+      // Wait for the toast to be visible before redirecting
+      setTimeout(() => {
+        router.push('/dashboard');
+        router.refresh();
+      }, 1000);
     } catch (error) {
-      console.error('Signup error details:', error);
+      console.error('Signup error:', error);
       
       // Handle different error types properly
       if (error instanceof Error) {
-        setError(error.message || 'An error occurred during signup');
+        toast.error('Signup failed', {
+          description: error.message || 'An error occurred during signup.',
+          duration: 4000,
+        });
       } else if (typeof error === 'object' && error !== null) {
         // For API errors that might be in a different format
         const errorObj = error as Record<string, unknown>;
@@ -87,16 +122,29 @@ export default function SignupForm() {
           typeof errorObj.error === 'string' ? errorObj.error :
           JSON.stringify(error);
           
-        setError(errorMessage || 'Unknown error format');
+        toast.error('Signup failed', {
+          description: errorMessage || 'Unknown error format',
+          duration: 4000,
+        });
       } else {
-        setError('An unknown error occurred during signup');
+        toast.error('Signup failed', {
+          description: 'An unknown error occurred during signup',
+          duration: 4000,
+        });
       }
     } finally {
       setLoading(false);
     }
   }
 
-  // Handle OAuth sign in
+  /**
+   * Initiates OAuth sign-in using Supabase authentication.
+   *
+   * Attempts to sign in the user via the specified OAuth provider and redirects to an authentication callback.
+   * If an error occurs during sign-in, displays an error toast detailing the issue.
+   *
+   * @param provider - The OAuth provider to use for sign-in, either 'google' or 'github'.
+   */
   async function handleOAuthSignIn(provider: 'google' | 'github') {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -110,7 +158,10 @@ export default function SignupForm() {
       console.error('OAuth error:', error);
       // Handle different error types properly
       if (error instanceof Error) {
-        setError(error.message || 'An error occurred during OAuth sign-in');
+        toast.error('OAuth sign-in failed', {
+          description: error.message || 'An error occurred during OAuth sign-in',
+          duration: 4000,
+        });
       } else if (typeof error === 'object' && error !== null) {
         // For Supabase errors that might be in a different format
         const errorObj = error as Record<string, unknown>;
@@ -118,9 +169,15 @@ export default function SignupForm() {
           typeof errorObj.message === 'string' 
             ? errorObj.message 
             : JSON.stringify(error);
-        setError(errorMessage);
+        toast.error('OAuth sign-in failed', {
+          description: errorMessage,
+          duration: 4000,
+        });
       } else {
-        setError('An unknown error occurred during OAuth sign-in');
+        toast.error('OAuth sign-in failed', {
+          description: 'An unknown error occurred during OAuth sign-in',
+          duration: 4000,
+        });
       }
     }
   }
@@ -128,12 +185,6 @@ export default function SignupForm() {
   return (
     <div className="max-w-md w-full mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800">
       <h2 className="text-2xl font-bold text-center mb-6">Create an Account</h2>
-      
-      {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 dark:bg-red-900/30 dark:text-red-400">
-          {error}
-        </div>
-      )}
       
       <form onSubmit={handleSignUp} className="space-y-4">
         <div>

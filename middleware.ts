@@ -2,53 +2,37 @@ import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+/**
+ * Handles authentication redirection for protected and auth-related routes in a Next.js application.
+ *
+ * This middleware utilizes a Supabase client to determine the user's authentication status and enforces:
+ * - A redirection to '/login' for unauthenticated users or when an error is encountered while accessing '/dashboard' routes.
+ * - A redirection to '/dashboard' for authenticated users attempting to access the '/login' or '/signup' pages.
+ *
+ * @param req - The incoming NextRequest object.
+ * @returns A NextResponse object that either continues processing or redirects based on authentication status.
+ */
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
-  
+
   try {
-    // First try to get the user (more secure)
-    const { data: { user } } = await supabase.auth.getUser();
-    const isAuthenticated = !!user;
+    const { data: { user }, error } = await supabase.auth.getUser();
     
-    // Check auth condition for protected routes
-    if (!isAuthenticated && req.nextUrl.pathname.startsWith('/dashboard')) {
-      // Redirect to login if accessing a protected route without authentication
-      const redirectUrl = req.nextUrl.clone();
-      redirectUrl.pathname = '/login';
-      redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname);
-      return NextResponse.redirect(redirectUrl);
+    // If there's no user and trying to access protected route
+    if ((!user || error) && req.nextUrl.pathname.startsWith('/dashboard')) {
+      return NextResponse.redirect(new URL('/login', req.url));
     }
 
-    // Redirect to dashboard if already logged in and accessing auth pages
-    if (isAuthenticated && (req.nextUrl.pathname === '/login' || req.nextUrl.pathname === '/signup')) {
-      const redirectUrl = req.nextUrl.clone();
-      redirectUrl.pathname = '/dashboard';
-      return NextResponse.redirect(redirectUrl);
+    // If there's a user and trying to access auth routes
+    if (user && (req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/signup'))) {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
     }
-  } catch (error) {
-    console.error('Auth middleware error:', error);
-    
-    // If getUser fails, fall back to session check
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Check auth condition for protected routes
-      if (!session && req.nextUrl.pathname.startsWith('/dashboard')) {
-        // Redirect to login if accessing a protected route without a session
-        const redirectUrl = req.nextUrl.clone();
-        redirectUrl.pathname = '/login';
-        redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname);
-        return NextResponse.redirect(redirectUrl);
-      }
-    } catch (sessionError) {
-      console.error('Session fallback error:', sessionError);
-      // If both methods fail, redirect protected routes to login
-      if (req.nextUrl.pathname.startsWith('/dashboard')) {
-        const redirectUrl = req.nextUrl.clone();
-        redirectUrl.pathname = '/login';
-        return NextResponse.redirect(redirectUrl);
-      }
+  } catch (e) {
+    console.error('Auth middleware error:', e);
+    // On error, redirect protected routes to login
+    if (req.nextUrl.pathname.startsWith('/dashboard')) {
+      return NextResponse.redirect(new URL('/login', req.url));
     }
   }
 
@@ -56,12 +40,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    // Apply middleware to these paths
-    '/dashboard/:path*',
-    '/login',
-    '/signup',
-    '/profile/:path*',
-    '/requests/:path*',
-  ],
-}; 
+  matcher: ['/dashboard/:path*', '/requests/new', '/login', '/signup'],
+};

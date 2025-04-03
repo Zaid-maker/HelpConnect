@@ -3,43 +3,68 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
+/**
+ * Renders a password reset form that allows users to update their password.
+ *
+ * The component performs a check on mount to verify the validity of the password reset link via session retrieval.
+ * Upon submitting the form, it validates that the new password matches its confirmation and meets the minimum length
+ * requirement before attempting to update the password using Supabase auth. Notifications for errors and successful updates
+ * are displayed using toast messages, and a successful update triggers a redirect to the login page.
+ *
+ * @returns A JSX element that displays the password reset form.
+ */
 export default function PasswordResetForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
 
   // Check if hash fragment is present (from password reset email)
   useEffect(() => {
     // The #access_token and #type=recovery hash params are handled automatically by Supabase Auth
     const handlePasswordReset = async () => {
-      const { data, error } = await supabase.auth.getSession();
+      const { error } = await supabase.auth.getSession();
       if (error) {
-        setError("Invalid or expired reset link. Please request a new password reset.");
+        toast.error('Invalid reset link', {
+          description: 'This password reset link is invalid or has expired. Please request a new one.',
+          duration: 4000,
+        });
       }
     };
 
     handlePasswordReset();
   }, []);
 
+  /**
+   * Handles the password update process from the reset form.
+   *
+   * This asynchronous function first prevents the default form submission behavior and then validates that the new password matches its confirmation and meets
+   * the minimum length requirement of 6 characters. If validation succeeds, it attempts to update the user's password using Supabase authentication. Success and error
+   * feedback are provided via toast notifications, with a successful update triggering a redirect to the login page.
+   *
+   * @param e - The form submission event.
+   */
   async function handlePasswordUpdate(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setMessage(null);
 
     // Validate passwords
     if (password !== confirmPassword) {
-      setError("Passwords don't match");
+      toast.error('Password mismatch', {
+        description: 'The passwords you entered do not match.',
+        duration: 4000,
+      });
       setLoading(false);
       return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      toast.error('Invalid password', {
+        description: 'Password must be at least 6 characters long.',
+        duration: 4000,
+      });
       setLoading(false);
       return;
     }
@@ -49,7 +74,10 @@ export default function PasswordResetForm() {
       
       if (error) throw error;
       
-      setMessage('Password updated successfully!');
+      toast.success('Password updated', {
+        description: 'Your password has been successfully updated.',
+        duration: 3000,
+      });
       
       // Redirect to login after a short delay
       setTimeout(() => {
@@ -57,7 +85,10 @@ export default function PasswordResetForm() {
       }, 2000);
     } catch (error) {
       console.error('Error updating password:', error);
-      setError((error as Error).message);
+      toast.error('Failed to update password', {
+        description: (error as Error).message || 'Please try again later.',
+        duration: 4000,
+      });
     } finally {
       setLoading(false);
     }
@@ -66,18 +97,6 @@ export default function PasswordResetForm() {
   return (
     <div className="max-w-md w-full mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800">
       <h2 className="text-2xl font-bold text-center mb-6">Create New Password</h2>
-      
-      {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 dark:bg-red-900/30 dark:text-red-400">
-          {error}
-        </div>
-      )}
-      
-      {message && (
-        <div className="bg-green-50 text-green-600 p-3 rounded-md mb-4 dark:bg-green-900/30 dark:text-green-400">
-          {message}
-        </div>
-      )}
       
       <form onSubmit={handlePasswordUpdate} className="space-y-4">
         <div>

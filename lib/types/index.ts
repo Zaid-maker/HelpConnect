@@ -11,19 +11,24 @@ export type Profile = {
   updated_at: string;
 };
 
-export type HelpRequest = {
+export interface HelpRequest {
   id: string;
   user_id: string;
   title: string;
   description: string;
   category: string;
   urgency_level: string;
-  location?: string;
+  location: string;
   location_hidden: boolean;
-  status: 'open' | 'in-progress' | 'completed';
   created_at: string;
   updated_at: string;
-};
+  status: 'open' | 'in_progress' | 'completed' | 'cancelled';
+  user?: {
+    id: string;
+    email: string;
+    full_name?: string;
+  };
+}
 
 export type Offer = {
   id: string;

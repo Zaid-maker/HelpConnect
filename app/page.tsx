@@ -1,5 +1,8 @@
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import Image from 'next/image';
+import Navigation from '@/components/layout/Navigation';
 
 // Icons for feature section
 const FeatureIcon = ({ children }: { children: React.ReactNode }) => (
@@ -8,35 +11,25 @@ const FeatureIcon = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-export default function HomePage() {
+/**
+ * Renders the HelpConnect homepage.
+ *
+ * This asynchronous server component initializes a Supabase client using cookies to retrieve
+ * the authenticated user and conditionally displays navigation, hero, features, testimonials,
+ * and call-to-action sections based on the user's login status.
+ *
+ * @returns A JSX element representing the homepage layout.
+ */
+export default async function Home() {
+  const supabase = createServerComponentClient({ cookies });
+
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <div className="min-h-screen">
-      {/* Navigation */}
-      <header className="bg-white shadow-sm dark:bg-gray-800 border-b dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex-shrink-0 flex items-center">
-              <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">HelpConnect</h1>
-            </div>
-            <div className="flex space-x-4">
-              <Link
-                href="/login"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 dark:text-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
-              >
-                Log in
-              </Link>
-              <Link
-                href="/signup"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-              >
-                Sign up
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main>
+      <Navigation />
+      
+      <main className="pt-16">
         {/* Hero Section */}
         <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,12 +49,21 @@ export default function HomePage() {
                 </p>
                 <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <Link
-                      href="/signup"
-                      className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10 dark:bg-blue-500 dark:hover:bg-blue-600"
-                    >
-                      Get Started
-                    </Link>
+                    {user ? (
+                      <Link
+                        href="/dashboard"
+                        className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10 dark:bg-blue-500 dark:hover:bg-blue-600"
+                      >
+                        Go to Dashboard
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/signup"
+                        className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10 dark:bg-blue-500 dark:hover:bg-blue-600"
+                      >
+                        Get Started
+                      </Link>
+                    )}
                     <Link
                       href="#how-it-works"
                       className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 md:py-4 md:text-lg md:px-10 dark:text-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
@@ -198,12 +200,21 @@ export default function HomePage() {
             </h2>
             <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
               <div className="inline-flex rounded-md shadow">
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-                >
-                  Get started
-                </Link>
+                {user ? (
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                  >
+                    Go to Dashboard
+                  </Link>
+                ) : (
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                  >
+                    Get started
+                  </Link>
+                )}
               </div>
               <div className="ml-3 inline-flex rounded-md shadow">
                 <Link
@@ -214,7 +225,7 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-        </div>
+          </div>
         </section>
       </main>
 

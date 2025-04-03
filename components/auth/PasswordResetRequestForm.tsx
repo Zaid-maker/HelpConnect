@@ -3,16 +3,32 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
+/**
+ * Renders a password reset request form.
+ *
+ * This component displays a form where users can request a password reset by providing their
+ * email address. It manages the email input and loading state, handles form submission by calling
+ * the authentication service to send a reset link, and uses toast notifications to inform the user
+ * of success or failure.
+ */
 export default function PasswordResetRequestForm() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  /**
+   * Handles the password reset form submission by sending a reset link email.
+   *
+   * Prevents the default submission behavior, sets the loading state, and initiates a password
+   * reset request using Supabase. Upon success, a success toast is displayed; on failure, the
+   * error is logged and an error toast is shown. The loading state is reset after the operation.
+   *
+   * @param e - The form submission event.
+   */
   async function handleResetRequest(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setMessage(null);
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -21,15 +37,15 @@ export default function PasswordResetRequestForm() {
 
       if (error) throw error;
       
-      setMessage({
-        type: 'success',
-        text: 'Check your email for a password reset link',
+      toast.success('Reset link sent', {
+        description: 'Check your email for a password reset link.',
+        duration: 4000,
       });
     } catch (error) {
       console.error('Reset request error:', error);
-      setMessage({
-        type: 'error',
-        text: (error as Error).message,
+      toast.error('Failed to send reset link', {
+        description: (error as Error).message || 'Please try again later.',
+        duration: 4000,
       });
     } finally {
       setLoading(false);
@@ -39,18 +55,6 @@ export default function PasswordResetRequestForm() {
   return (
     <div className="max-w-md w-full mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800">
       <h2 className="text-2xl font-bold text-center mb-6">Reset Your Password</h2>
-      
-      {message && (
-        <div 
-          className={`${
-            message.type === 'success' 
-              ? 'bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
-              : 'bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-          } p-4 rounded-md mb-4`}
-        >
-          {message.text}
-        </div>
-      )}
       
       <form onSubmit={handleResetRequest} className="space-y-4">
         <div>

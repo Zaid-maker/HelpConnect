@@ -3,16 +3,28 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import RequestCard from './RequestCard';
-import { HelpRequest } from '@/lib/types';
+import { HelpRequest } from '@/lib/types/index';
 
 type HelpFeedProps = {
   initialRequests: HelpRequest[];
   currentUserId?: string;
 };
 
+/**
+ * Displays and updates a list of community help requests in real time.
+ *
+ * The HelpFeed component renders an initial set of help requests and listens for live updates via a Supabase channel.
+ * It responds to INSERT, UPDATE, and DELETE events on the 'help_requests' table by respectively adding, updating,
+ * or removing requests from its state. When there are no available requests, it displays an informative empty state
+ * with a prompt to create the first request.
+ *
+ * @param initialRequests - The initial array of help request objects.
+ * @param currentUserId - Optional identifier for the current user.
+ *
+ * @returns A React element representing the community help request feed.
+ */
 export default function HelpFeed({ initialRequests, currentUserId }: HelpFeedProps) {
   const [requests, setRequests] = useState<HelpRequest[]>(initialRequests);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setRequests(initialRequests);
@@ -72,9 +84,7 @@ export default function HelpFeed({ initialRequests, currentUserId }: HelpFeedPro
     <div className="space-y-4">
       <h2 className="text-xl font-bold mb-4">Community Help Requests</h2>
       
-      {loading ? (
-        <div className="text-center py-10">Loading requests...</div>
-      ) : requests.length === 0 ? (
+      {requests.length === 0 ? (
         <div className="text-center py-10 bg-gray-50 rounded-lg dark:bg-gray-800">
           <p className="text-gray-500 dark:text-gray-400">
             No help requests at the moment.
