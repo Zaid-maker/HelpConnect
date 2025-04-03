@@ -9,25 +9,30 @@ export default async function ProfilePage() {
   const supabase = createServerSupabaseClient();
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
     if (error || !user) {
-      redirect('/login');
+      redirect("/login");
     }
 
     // Fetch user profile data
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
       .single();
 
     // If profile doesn't exist, create one
     if (profileError || !profile) {
-      const username = user.email?.split('@')[0] || `user_${Math.random().toString(36).substring(2, 7)}`;
-      
+      const username =
+        user.email?.split("@")[0] ||
+        `user_${Math.random().toString(36).substring(2, 7)}`;
+
       const { data: newProfile, error: insertError } = await supabase
-        .from('profiles')
+        .from("profiles")
         .insert({
           id: user.id,
           username,
@@ -37,7 +42,7 @@ export default async function ProfilePage() {
         .single();
 
       if (insertError) {
-        console.error('Error creating profile:', insertError);
+        console.error("Error creating profile:", insertError);
         return (
           <PageContainer>
             <Card>
@@ -59,10 +64,10 @@ export default async function ProfilePage() {
               <div className="flex justify-between items-start">
                 <div>
                   <Heading level={1}>
-                    {newProfile?.full_name || 'My Profile'}
+                    {newProfile?.full_name || "My Profile"}
                   </Heading>
                   <p className="mt-2 text-gray-600 dark:text-gray-300">
-                    {newProfile?.bio || 'No bio available'}
+                    {newProfile?.bio || "No bio available"}
                   </p>
                 </div>
                 <Button href="/profile/edit" size="md">
@@ -73,19 +78,21 @@ export default async function ProfilePage() {
 
             <div className="grid gap-6 md:grid-cols-2">
               <div>
-                <h2 className="text-lg font-semibold mb-4">Contact Information</h2>
+                <h2 className="text-lg font-semibold mb-4">
+                  Contact Information
+                </h2>
                 <div className="space-y-2">
                   <p>
-                    <span className="font-medium">Email:</span>{' '}
-                    {user.email || 'Not provided'}
+                    <span className="font-medium">Email:</span>{" "}
+                    {user.email || "Not provided"}
                   </p>
                   <p>
-                    <span className="font-medium">Phone:</span>{' '}
-                    {newProfile?.phone || 'Not provided'}
+                    <span className="font-medium">Phone:</span>{" "}
+                    {newProfile?.phone || "Not provided"}
                   </p>
                   <p>
-                    <span className="font-medium">Location:</span>{' '}
-                    {newProfile?.location || 'Not provided'}
+                    <span className="font-medium">Location:</span>{" "}
+                    {newProfile?.location || "Not provided"}
                   </p>
                 </div>
               </div>
@@ -94,12 +101,16 @@ export default async function ProfilePage() {
                 <h2 className="text-lg font-semibold mb-4">Account Details</h2>
                 <div className="space-y-2">
                   <p>
-                    <span className="font-medium">Member since:</span>{' '}
-                    {new Date(newProfile?.created_at || '').toLocaleDateString()}
+                    <span className="font-medium">Member since:</span>{" "}
+                    {newProfile?.created_at
+                      ? new Date(newProfile.created_at).toLocaleDateString()
+                      : "Unknown"}
                   </p>
                   <p>
-                    <span className="font-medium">Last updated:</span>{' '}
-                    {new Date(newProfile?.updated_at || '').toLocaleDateString()}
+                    <span className="font-medium">Last updated:</span>{" "}
+                    {newProfile?.updated_at
+                      ? new Date(newProfile.updated_at).toLocaleDateString()
+                      : "Unknown"}
                   </p>
                 </div>
               </div>
@@ -115,11 +126,9 @@ export default async function ProfilePage() {
           <div className="mb-6">
             <div className="flex justify-between items-start">
               <div>
-                <Heading level={1}>
-                  {profile.full_name || 'My Profile'}
-                </Heading>
+                <Heading level={1}>{profile.full_name || "My Profile"}</Heading>
                 <p className="mt-2 text-gray-600 dark:text-gray-300">
-                  {profile.bio || 'No bio available'}
+                  {profile.bio || "No bio available"}
                 </p>
               </div>
               <Button href="/profile/edit" size="md">
@@ -130,19 +139,21 @@ export default async function ProfilePage() {
 
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <h2 className="text-lg font-semibold mb-4">Contact Information</h2>
+              <h2 className="text-lg font-semibold mb-4">
+                Contact Information
+              </h2>
               <div className="space-y-2">
                 <p>
-                  <span className="font-medium">Email:</span>{' '}
-                  {user.email || 'Not provided'}
+                  <span className="font-medium">Email:</span>{" "}
+                  {user.email || "Not provided"}
                 </p>
                 <p>
-                  <span className="font-medium">Phone:</span>{' '}
-                  {profile.phone || 'Not provided'}
+                  <span className="font-medium">Phone:</span>{" "}
+                  {profile.phone || "Not provided"}
                 </p>
                 <p>
-                  <span className="font-medium">Location:</span>{' '}
-                  {profile.location || 'Not provided'}
+                  <span className="font-medium">Location:</span>{" "}
+                  {profile.location || "Not provided"}
                 </p>
               </div>
             </div>
@@ -151,12 +162,16 @@ export default async function ProfilePage() {
               <h2 className="text-lg font-semibold mb-4">Account Details</h2>
               <div className="space-y-2">
                 <p>
-                  <span className="font-medium">Member since:</span>{' '}
-                  {new Date(profile.created_at).toLocaleDateString()}
+                  <span className="font-medium">Member since:</span>{" "}
+                  {profile.created_at
+                    ? new Date(profile.created_at).toLocaleDateString()
+                    : "Unknown"}
                 </p>
                 <p>
-                  <span className="font-medium">Last updated:</span>{' '}
-                  {new Date(profile.updated_at).toLocaleDateString()}
+                  <span className="font-medium">Last updated:</span>{" "}
+                  {profile.updated_at
+                    ? new Date(profile.updated_at).toLocaleDateString()
+                    : "Unknown"}
                 </p>
               </div>
             </div>
@@ -165,7 +180,7 @@ export default async function ProfilePage() {
       </PageContainer>
     );
   } catch (e) {
-    console.error('Unexpected error:', e);
-    redirect('/login');
+    console.error("Unexpected error:", e);
+    redirect("/login");
   }
-} 
+}
