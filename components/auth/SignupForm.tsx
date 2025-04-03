@@ -28,6 +28,19 @@ export default function SignupForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  /**
+   * Processes the signup form submission to create a new user account.
+   *
+   * This function prevents the default form submission behavior and validates that the
+   * password and confirmation match, and that the password meets a minimum length of 6 characters.
+   * If the validations fail, it displays appropriate toast error notifications and stops further execution.
+   * It then sends a POST request to the signup API endpoint with the user's email, password, username,
+   * and full name. On a successful signup, it automatically signs the user in via Supabase, shows a success
+   * toast notification, and redirects the user to the dashboard after a brief delay. In case of any errors
+   * during the signup or sign-in process, an error toast notification is shown.
+   *
+   * @param e - The event triggered by the form submission.
+   */
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -124,7 +137,14 @@ export default function SignupForm() {
     }
   }
 
-  // Handle OAuth sign in
+  /**
+   * Initiates OAuth sign-in using Supabase authentication.
+   *
+   * Attempts to sign in the user via the specified OAuth provider and redirects to an authentication callback.
+   * If an error occurs during sign-in, displays an error toast detailing the issue.
+   *
+   * @param provider - The OAuth provider to use for sign-in, either 'google' or 'github'.
+   */
   async function handleOAuthSignIn(provider: 'google' | 'github') {
     try {
       const { error } = await supabase.auth.signInWithOAuth({

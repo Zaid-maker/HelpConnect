@@ -17,6 +17,15 @@ export default function PasswordResetRequestForm() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Handles the password reset form submission by sending a reset link email.
+   *
+   * Prevents the default submission behavior, sets the loading state, and initiates a password
+   * reset request using Supabase. Upon success, a success toast is displayed; on failure, the
+   * error is logged and an error toast is shown. The loading state is reset after the operation.
+   *
+   * @param e - The form submission event.
+   */
   async function handleResetRequest(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
