@@ -28,7 +28,7 @@ export default async function EditProfilePage() {
   return (
     <PageContainer>
       <Card>
-        <div className="mb-6">
+        <div className="mb-8">
           <Heading level={1}>Edit Profile</Heading>
           <p className="mt-2 text-gray-600 dark:text-gray-300">
             Update your profile information to help others get to know you better.

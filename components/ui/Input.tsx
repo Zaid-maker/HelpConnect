@@ -19,7 +19,7 @@ export default function Input({
   ...props 
 }: InputProps) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
         {label}
       </label>
@@ -29,6 +29,7 @@ export default function Input({
           focus:border-blue-500 focus:ring-blue-500 sm:text-sm
           dark:bg-gray-700 dark:border-gray-600 dark:text-white
           dark:focus:border-blue-400 dark:focus:ring-blue-400
+          disabled:opacity-50 disabled:cursor-not-allowed
           ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
           ${className}
         `}

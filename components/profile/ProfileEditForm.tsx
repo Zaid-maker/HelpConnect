@@ -77,7 +77,7 @@ export default function ProfileEditForm({ initialProfile }: ProfileEditFormProps
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-8">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <Input
@@ -132,7 +132,7 @@ export default function ProfileEditForm({ initialProfile }: ProfileEditFormProps
         </div>
       </div>
 
-      <div className="flex justify-end space-x-4">
+      <div className="flex justify-end space-x-4 pt-4">
         <Button
           type="button"
           variant="outline"
