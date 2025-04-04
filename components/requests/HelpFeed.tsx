@@ -98,6 +98,14 @@ export default function HelpFeed({ initialRequests, currentUserId }: HelpFeedPro
     setSelectedStatus(e.target.value);
   };
 
+  const handleRequestUpdate = (updatedRequest: HelpRequest) => {
+    setRequests(prev => 
+      prev.map(request => 
+        request.id === updatedRequest.id ? updatedRequest : request
+      )
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
@@ -133,7 +141,8 @@ export default function HelpFeed({ initialRequests, currentUserId }: HelpFeedPro
             <RequestCard 
               key={request.id} 
               request={request} 
-              currentUserId={currentUserId} 
+              currentUserId={currentUserId}
+              onStatusChange={handleRequestUpdate}
             />
           ))}
         </div>

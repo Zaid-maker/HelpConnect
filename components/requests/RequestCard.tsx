@@ -8,9 +8,11 @@ import RequestStatus from './RequestStatus';
 type RequestCardProps = {
   request: HelpRequest;
   currentUserId?: string;
+  onStatusChange?: (updatedRequest: HelpRequest) => void;
 };
 
-export default function RequestCard({ request, currentUserId }: RequestCardProps) {
+export default function RequestCard({ request: initialRequest, currentUserId, onStatusChange }: RequestCardProps) {
+  const [request, setRequest] = useState(initialRequest);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   
@@ -44,6 +46,11 @@ export default function RequestCard({ request, currentUserId }: RequestCardProps
       setIsLoading(false);
     }
   };
+
+  const handleStatusChange = (updatedRequest: HelpRequest) => {
+    setRequest(updatedRequest);
+    onStatusChange?.(updatedRequest);
+  };
   
   return (
     <div className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
@@ -57,7 +64,8 @@ export default function RequestCard({ request, currentUserId }: RequestCardProps
             {currentUserId && (
               <RequestStatus 
                 request={request} 
-                currentUserId={currentUserId} 
+                currentUserId={currentUserId}
+                onStatusChange={handleStatusChange}
               />
             )}
           </div>
