@@ -67,7 +67,7 @@ export default function RequestStatus({ request, currentUserId, onStatusChange }
         {statusLabels[request.status]}
       </button>
       
-      <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 hidden group-hover:block z-10">
+      <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 delay-150 z-10">
         <div className="py-1">
           {Object.entries(statusLabels).map(([status, label]) => (
             <button
