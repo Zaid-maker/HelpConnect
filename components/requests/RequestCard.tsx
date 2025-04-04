@@ -3,6 +3,7 @@
 import { HelpRequest } from '@/lib/types/index';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import RequestStatus from './RequestStatus';
 
 type RequestCardProps = {
   request: HelpRequest;
@@ -49,9 +50,17 @@ export default function RequestCard({ request, currentUserId }: RequestCardProps
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-lg font-medium">{request.title}</h3>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getUrgencyClass()}`}>
-            {request.urgency_level}
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getUrgencyClass()}`}>
+              {request.urgency_level}
+            </span>
+            {currentUserId && (
+              <RequestStatus 
+                request={request} 
+                currentUserId={currentUserId} 
+              />
+            )}
+          </div>
         </div>
         
         <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
@@ -67,7 +76,7 @@ export default function RequestCard({ request, currentUserId }: RequestCardProps
         
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Status: <span className="capitalize">{request.status}</span>
+            Posted by {request.user?.full_name || 'Anonymous'}
           </span>
           
           {!isOwner && request.status === 'open' && (
