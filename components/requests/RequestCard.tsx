@@ -4,6 +4,7 @@ import { HelpRequest } from '@/lib/types/index';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import RequestStatus from './RequestStatus';
+import UrgencyLevel from './UrgencyLevel';
 
 type RequestCardProps = {
   request: HelpRequest;
@@ -17,19 +18,6 @@ export default function RequestCard({ request: initialRequest, currentUserId, on
   const router = useRouter();
   
   const isOwner = currentUserId === request.user_id;
-  
-  const urgencyColors = {
-    low: 'bg-green-100 text-green-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    high: 'bg-red-100 text-red-800',
-    emergency: 'bg-red-600 text-white'
-  };
-  
-  // Get urgency color class
-  const getUrgencyClass = () => {
-    const key = request.urgency_level.toLowerCase() as keyof typeof urgencyColors;
-    return urgencyColors[key] || 'bg-gray-100 text-gray-800';
-  };
   
   const handleOfferHelp = async () => {
     if (!currentUserId) {
@@ -51,6 +39,10 @@ export default function RequestCard({ request: initialRequest, currentUserId, on
     setRequest(updatedRequest);
     onStatusChange?.(updatedRequest);
   };
+
+  const handleUrgencyChange = (updatedRequest: HelpRequest) => {
+    setRequest(updatedRequest);
+  };
   
   return (
     <div className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
@@ -58,14 +50,25 @@ export default function RequestCard({ request: initialRequest, currentUserId, on
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-lg font-medium">{request.title}</h3>
           <div className="flex items-center space-x-2">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getUrgencyClass()}`}>
-              {request.urgency_level}
-            </span>
             {currentUserId && (
-              <RequestStatus 
-                request={request} 
-                currentUserId={currentUserId}
-                onStatusChange={handleStatusChange}
+              <>
+                <UrgencyLevel
+                  request={request}
+                  currentUserId={currentUserId}
+                  onUrgencyChange={handleUrgencyChange}
+                />
+                <RequestStatus 
+                  request={request} 
+                  currentUserId={currentUserId}
+                  onStatusChange={handleStatusChange}
+                />
+              </>
+            )}
+            {!currentUserId && (
+              <UrgencyLevel
+                request={request}
+                currentUserId=""
+                onUrgencyChange={handleUrgencyChange}
               />
             )}
           </div>
