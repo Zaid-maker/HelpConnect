@@ -62,6 +62,8 @@ export default async function EditRequestPage({ params }: PageProps) {
     );
   } catch (error) {
     console.error('Error:', error);
+    // Consider implementing a solution to show an error message to the user
+    // Either by passing an error parameter in the redirect or using a global state/context
     redirect('/dashboard');
   }
 } 
