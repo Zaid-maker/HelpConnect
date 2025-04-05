@@ -7,13 +7,18 @@ import Card from '@/components/layout/Card';
 import Heading from '@/components/ui/Heading';
 import RequestEditForm from '@/components/requests/RequestEditForm';
 
-type Props = {
-  params: {
-    id: string;
-  };
+type PageProps = {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
-export default async function EditRequestPage({ params }: Props) {
+/**
+ * Edit request page component that allows users to modify their help requests.
+ * 
+ * @param props - The page props containing route parameters
+ * @returns The rendered page component
+ */
+export default async function EditRequestPage({ params }: PageProps) {
   const supabase = createServerComponentClient({ cookies });
 
   try {
