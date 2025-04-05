@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { HelpRequest } from '@/lib/types/index';
@@ -32,6 +32,21 @@ export default function RequestEditForm({ initialRequest }: RequestEditFormProps
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Verify user has access to edit this request
+  useEffect(() => {
+    const checkAccess = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || user.id !== initialRequest.user_id) {
+        toast.error('Access Denied', {
+          description: 'You do not have permission to edit this request.',
+          duration: 4000,
+        });
+        router.push('/dashboard');
+      }
+    };
+    checkAccess();
+  }, [initialRequest.user_id, router, supabase.auth]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
