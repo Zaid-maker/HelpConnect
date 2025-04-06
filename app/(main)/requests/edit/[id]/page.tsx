@@ -9,7 +9,6 @@ import RequestEditForm from '@/components/requests/RequestEditForm';
 
 type PageProps = {
   params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 /**
