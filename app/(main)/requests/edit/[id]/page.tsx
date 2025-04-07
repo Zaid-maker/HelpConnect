@@ -7,17 +7,18 @@ import Card from '@/components/layout/Card';
 import Heading from '@/components/ui/Heading';
 import RequestEditForm from '@/components/requests/RequestEditForm';
 
-type PageProps = {
-  params: { id: string };
-};
-
 /**
  * Edit request page component that allows users to modify their help requests.
  * 
  * @param props - The page props containing route parameters
  * @returns The rendered page component
  */
-export default async function EditRequestPage({ params }: PageProps) {
+export default async function EditRequestPage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const resolvedParams = await params;
   const supabase = createServerComponentClient({ cookies });
 
   // Check authentication
@@ -30,7 +31,7 @@ export default async function EditRequestPage({ params }: PageProps) {
   const { data: request, error: requestError } = await supabase
     .from('help_requests')
     .select('*, user:profiles(full_name)')
-    .eq('id', params.id)
+    .eq('id', resolvedParams.id)
     .single();
 
   if (requestError || !request) {
