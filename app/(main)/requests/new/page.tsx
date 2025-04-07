@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Create New Help Request - HelpConnect',
     description: 'Need help? Create a request and connect with community members who can assist you.',
+    url: 'https://help-connect-amber.vercel.app/requests/new',
   },
 };
 
@@ -38,14 +39,13 @@ export default async function NewRequestPage() {
   return (
     <PageContainer>
       <Card>
-        <div className="mb-8">
-          <Heading level={1}>
-            Create New Help Request
-          </Heading>
-          <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">
-            Describe what kind of help you need from the community
+        <div className="mb-6">
+          <Heading level={2}>Create New Help Request</Heading>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Fill out the form below to create a new help request
           </p>
         </div>
+
         <NewRequestForm userId={user.id} />
       </Card>
     </PageContainer>

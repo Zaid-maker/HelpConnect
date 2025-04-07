@@ -26,13 +26,15 @@ export const metadata: Metadata = {
     description: 'Connect with your community for mutual support and assistance.',
     type: 'website',
     siteName: 'HelpConnect',
+    url: 'https://help-connect-amber.vercel.app',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'HelpConnect - Community Support Network',
     description: 'Connect with your community for mutual support and assistance.',
+    site: '@helpconnect',
   },
-  metadataBase: new URL('https://helpconnect.vercel.app'),
+  metadataBase: new URL('https://help-connect-amber.vercel.app'),
 };
 
 /**

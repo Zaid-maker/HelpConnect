@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'HelpConnect Dashboard',
     description: 'Connect with your community and offer or receive help.',
+    url: 'https://help-connect-amber.vercel.app/dashboard',
   },
 };
 

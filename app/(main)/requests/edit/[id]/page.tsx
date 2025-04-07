@@ -25,11 +25,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: request?.title ? `Edit: ${request.title}` : 'Edit Request',
       description: 'Update your help request details and preferences.',
+      openGraph: {
+        title: request?.title ? `Edit: ${request.title} - HelpConnect` : 'Edit Request - HelpConnect',
+        description: 'Update your help request details and preferences.',
+        url: `https://help-connect-amber.vercel.app/requests/edit/${params.id}`,
+      },
     };
   } catch {
     return {
       title: 'Edit Request',
       description: 'Update your help request details and preferences.',
+      openGraph: {
+        title: 'Edit Request - HelpConnect',
+        description: 'Update your help request details and preferences.',
+        url: `https://help-connect-amber.vercel.app/requests/edit/${params.id}`,
+      },
     };
   }
 }
