@@ -9,17 +9,19 @@ import RequestEditForm from '@/components/requests/RequestEditForm';
 import { Metadata } from 'next';
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params;
   const supabase = createServerComponentClient({ cookies });
   
   try {
     const { data: request } = await supabase
       .from('help_requests')
       .select('title')
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single();
 
     return {
@@ -28,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title: request?.title ? `Edit: ${request.title} - HelpConnect` : 'Edit Request - HelpConnect',
         description: 'Update your help request details and preferences.',
-        url: `https://help-connect-amber.vercel.app/requests/edit/${params.id}`,
+        url: `https://help-connect-amber.vercel.app/requests/edit/${resolvedParams.id}`,
       },
     };
   } catch {
@@ -38,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title: 'Edit Request - HelpConnect',
         description: 'Update your help request details and preferences.',
-        url: `https://help-connect-amber.vercel.app/requests/edit/${params.id}`,
+        url: `https://help-connect-amber.vercel.app/requests/edit/${resolvedParams.id}`,
       },
     };
   }
@@ -51,6 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  * @returns The rendered page component
  */
 export default async function EditRequestPage({ params }: Props) {
+  const resolvedParams = await params;
   const supabase = createServerComponentClient({ cookies });
 
   // Check authentication
@@ -63,7 +66,7 @@ export default async function EditRequestPage({ params }: Props) {
   const { data: request, error: requestError } = await supabase
     .from('help_requests')
     .select('*, user:profiles(full_name)')
-    .eq('id', params.id)
+    .eq('id', resolvedParams.id)
     .single();
 
   if (requestError || !request) {
