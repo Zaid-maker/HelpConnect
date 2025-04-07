@@ -3,30 +3,21 @@
 import { HelpRequest } from '@/lib/types/index';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import RequestStatus from './RequestStatus';
+import UrgencyLevel from './UrgencyLevel';
 
 type RequestCardProps = {
   request: HelpRequest;
   currentUserId?: string;
+  onStatusChange?: (updatedRequest: HelpRequest) => void;
 };
 
-export default function RequestCard({ request, currentUserId }: RequestCardProps) {
+export default function RequestCard({ request: initialRequest, currentUserId, onStatusChange }: RequestCardProps) {
+  const [request, setRequest] = useState(initialRequest);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   
   const isOwner = currentUserId === request.user_id;
-  
-  const urgencyColors = {
-    low: 'bg-green-100 text-green-800',
-    medium: 'bg-yellow-100 text-yellow-800',
-    high: 'bg-red-100 text-red-800',
-    emergency: 'bg-red-600 text-white'
-  };
-  
-  // Get urgency color class
-  const getUrgencyClass = () => {
-    const key = request.urgency_level.toLowerCase() as keyof typeof urgencyColors;
-    return urgencyColors[key] || 'bg-gray-100 text-gray-800';
-  };
   
   const handleOfferHelp = async () => {
     if (!currentUserId) {
@@ -43,15 +34,44 @@ export default function RequestCard({ request, currentUserId }: RequestCardProps
       setIsLoading(false);
     }
   };
+
+  const handleStatusChange = (updatedRequest: HelpRequest) => {
+    setRequest(updatedRequest);
+    onStatusChange?.(updatedRequest);
+  };
+
+  const handleUrgencyChange = (updatedRequest: HelpRequest) => {
+    setRequest(updatedRequest);
+  };
   
   return (
     <div className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-lg font-medium">{request.title}</h3>
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getUrgencyClass()}`}>
-            {request.urgency_level}
-          </span>
+          <div className="flex items-center space-x-2">
+            {currentUserId && (
+              <>
+                <UrgencyLevel
+                  request={request}
+                  currentUserId={currentUserId}
+                  onUrgencyChange={handleUrgencyChange}
+                />
+                <RequestStatus 
+                  request={request} 
+                  currentUserId={currentUserId}
+                  onStatusChange={handleStatusChange}
+                />
+              </>
+            )}
+            {!currentUserId && (
+              <UrgencyLevel
+                request={request}
+                currentUserId=""
+                onUrgencyChange={handleUrgencyChange}
+              />
+            )}
+          </div>
         </div>
         
         <p className="text-gray-600 dark:text-gray-300 text-sm mb-3">
@@ -67,7 +87,7 @@ export default function RequestCard({ request, currentUserId }: RequestCardProps
         
         <div className="flex justify-between items-center">
           <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Status: <span className="capitalize">{request.status}</span>
+            Posted by {request.user?.full_name || 'Anonymous'}
           </span>
           
           {!isOwner && request.status === 'open' && (

@@ -1,14 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import RequestCard from './RequestCard';
 import { HelpRequest } from '@/lib/types/index';
+import Select from '@/components/ui/Select';
 
 type HelpFeedProps = {
   initialRequests: HelpRequest[];
   currentUserId?: string;
 };
+
+const statusOptions = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'open', label: 'Open' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' }
+];
 
 /**
  * Displays and updates a list of community help requests in real time.
@@ -25,6 +34,7 @@ type HelpFeedProps = {
  */
 export default function HelpFeed({ initialRequests, currentUserId }: HelpFeedProps) {
   const [requests, setRequests] = useState<HelpRequest[]>(initialRequests);
+  const [selectedStatus, setSelectedStatus] = useState('all');
 
   useEffect(() => {
     setRequests(initialRequests);
@@ -80,31 +90,59 @@ export default function HelpFeed({ initialRequests, currentUserId }: HelpFeedPro
     };
   }, []);
 
+  const filteredRequests = selectedStatus === 'all'
+    ? requests
+    : requests.filter(request => request.status === selectedStatus);
+
+  const handleStatusChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(e.target.value);
+  };
+
+  const handleRequestUpdate = (updatedRequest: HelpRequest) => {
+    setRequests(prev => 
+      prev.map(request => 
+        request.id === updatedRequest.id ? updatedRequest : request
+      )
+    );
+  };
+
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold mb-4">Community Help Requests</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold">Community Help Requests</h2>
+        <div className="w-48">
+          <Select
+            value={selectedStatus}
+            onChange={handleStatusChange}
+            options={statusOptions}
+          />
+        </div>
+      </div>
       
-      {requests.length === 0 ? (
+      {filteredRequests.length === 0 ? (
         <div className="text-center py-10 bg-gray-50 rounded-lg dark:bg-gray-800">
           <p className="text-gray-500 dark:text-gray-400">
-            No help requests at the moment.
+            No help requests found.
           </p>
-          <p className="mt-2">
-            <button 
-              onClick={() => {}} 
-              className="text-blue-600 hover:underline"
-            >
-              Create the first request
-            </button>
-          </p>
+          {selectedStatus !== 'all' && (
+            <p className="mt-2">
+              <button 
+                onClick={() => setSelectedStatus('all')}
+                className="text-blue-600 hover:underline"
+              >
+                View all requests
+              </button>
+            </p>
+          )}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {requests.map((request) => (
+          {filteredRequests.map((request) => (
             <RequestCard 
               key={request.id} 
               request={request} 
-              currentUserId={currentUserId} 
+              currentUserId={currentUserId}
+              onStatusChange={handleRequestUpdate}
             />
           ))}
         </div>
