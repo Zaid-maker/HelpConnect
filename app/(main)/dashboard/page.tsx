@@ -7,6 +7,16 @@ import PageContainer from '@/components/layout/PageContainer';
 import Card from '@/components/layout/Card';
 import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Dashboard',
+  description: 'View and manage your help requests, or offer assistance to others in your community.',
+  openGraph: {
+    title: 'HelpConnect Dashboard',
+    description: 'Connect with your community and offer or receive help.',
+  },
+};
 
 /**
  * Renders the dashboard page for authenticated users.

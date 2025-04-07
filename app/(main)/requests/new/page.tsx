@@ -5,6 +5,16 @@ import NewRequestForm from '@/components/requests/NewRequestForm';
 import PageContainer from '@/components/layout/PageContainer';
 import Card from '@/components/layout/Card';
 import Heading from '@/components/ui/Heading';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Create New Request',
+  description: 'Create a new help request and connect with community members who can assist you.',
+  openGraph: {
+    title: 'Create New Help Request - HelpConnect',
+    description: 'Need help? Create a request and connect with community members who can assist you.',
+  },
+};
 
 /**
  * Renders a page for creating a new help request.

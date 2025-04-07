@@ -6,6 +6,33 @@ import PageContainer from '@/components/layout/PageContainer';
 import Card from '@/components/layout/Card';
 import Heading from '@/components/ui/Heading';
 import RequestEditForm from '@/components/requests/RequestEditForm';
+import { Metadata } from 'next';
+
+type Props = {
+  params: { id: string };
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const supabase = createServerComponentClient({ cookies });
+  
+  try {
+    const { data: request } = await supabase
+      .from('help_requests')
+      .select('title')
+      .eq('id', params.id)
+      .single();
+
+    return {
+      title: request?.title ? `Edit: ${request.title}` : 'Edit Request',
+      description: 'Update your help request details and preferences.',
+    };
+  } catch {
+    return {
+      title: 'Edit Request',
+      description: 'Update your help request details and preferences.',
+    };
+  }
+}
 
 /**
  * Edit request page component that allows users to modify their help requests.
@@ -13,12 +40,7 @@ import RequestEditForm from '@/components/requests/RequestEditForm';
  * @param props - The page props containing route parameters
  * @returns The rendered page component
  */
-export default async function EditRequestPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const resolvedParams = await params;
+export default async function EditRequestPage({ params }: Props) {
   const supabase = createServerComponentClient({ cookies });
 
   // Check authentication
@@ -31,7 +53,7 @@ export default async function EditRequestPage({
   const { data: request, error: requestError } = await supabase
     .from('help_requests')
     .select('*, user:profiles(full_name)')
-    .eq('id', resolvedParams.id)
+    .eq('id', params.id)
     .single();
 
   if (requestError || !request) {
