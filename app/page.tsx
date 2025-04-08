@@ -1,32 +1,40 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+'use client';
+
 import Link from "next/link";
 import Image from "next/image";
 import Navigation from "@/components/layout/Navigation";
+import { motion } from "framer-motion";
 
 // Icons for feature section
 const FeatureIcon = ({ children }: { children: React.ReactNode }) => (
-  <div className="p-3 bg-blue-100 rounded-lg inline-flex items-center justify-center dark:bg-blue-900/30">
+  <div className="p-3 bg-blue-100 rounded-lg inline-flex items-center justify-center dark:bg-blue-900/30 transition-all duration-300 hover:scale-110 hover:shadow-lg">
     {children}
   </div>
 );
 
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 }
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
 /**
  * Renders the HelpConnect homepage.
  *
- * This asynchronous server component initializes a Supabase client using cookies to retrieve
- * the authenticated user and conditionally displays navigation, hero, features, testimonials,
- * and call-to-action sections based on the user's login status.
+ * This client component displays the landing page with animated sections using Framer Motion.
+ * It includes a hero section, features, testimonials, and call-to-action areas.
  *
  * @returns A JSX element representing the homepage layout.
  */
-export default async function Home() {
-  const supabase = createServerComponentClient({ cookies });
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+export default function Home() {
   return (
     <div className="min-h-screen">
       <Navigation />
@@ -36,7 +44,12 @@ export default async function Home() {
         <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="lg:grid lg:grid-cols-12 lg:gap-8">
-              <div className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left">
+              <motion.div 
+                className="sm:text-center md:max-w-2xl md:mx-auto lg:col-span-6 lg:text-left"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
                 <h1>
                   <span className="block text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
                     Introducing
@@ -55,46 +68,38 @@ export default async function Home() {
                   members to request and offer assistance for everything from
                   simple favors to urgent needs.
                 </p>
-                <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {user ? (
-                      <Link
-                        href="/dashboard"
-                        className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10 dark:bg-blue-500 dark:hover:bg-blue-600"
-                      >
-                        Go to Dashboard
-                      </Link>
-                    ) : (
-                      <Link
-                        href="/signup"
-                        className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10 dark:bg-blue-500 dark:hover:bg-blue-600"
-                      >
-                        Get Started
-                      </Link>
-                    )}
-                    <Link
-                      href="#how-it-works"
-                      className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 md:py-4 md:text-lg md:px-10 dark:text-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50"
-                    >
-                      Learn More
-                    </Link>
-                  </div>
+                <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Link
+                    href="/signup"
+                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10 dark:bg-blue-500 dark:hover:bg-blue-600 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  >
+                    Get Started
+                  </Link>
+                  <Link
+                    href="#how-it-works"
+                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 md:py-4 md:text-lg md:px-10 dark:text-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  >
+                    Learn More
+                  </Link>
                 </div>
-              </div>
-              <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
-                <div className="relative mx-auto w-full rounded-lg shadow-lg lg:max-w-md">
-                  <div className="relative block w-full bg-white rounded-lg overflow-hidden dark:bg-gray-700">
-                    <Image
-                      className="w-full"
-                      src="/hero-image.jpg"
-                      alt="People helping each other"
-                      width={500}
-                      height={300}
-                      priority
-                    />
-                  </div>
+              </motion.div>
+              <motion.div 
+                className="mt-12 relative mx-auto w-full rounded-lg shadow-lg lg:mt-0 lg:col-span-6 lg:max-w-md"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <div className="relative block w-full bg-white rounded-lg overflow-hidden dark:bg-gray-700 transition-all duration-300 hover:shadow-xl">
+                  <Image
+                    className="w-full transform hover:scale-105 transition-transform duration-500"
+                    src="/hero-image.jpg"
+                    alt="People helping each other"
+                    width={500}
+                    height={300}
+                    priority
+                  />
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         </section>
@@ -102,7 +107,12 @@ export default async function Home() {
         {/* Features Section */}
         <section className="py-12 bg-white dark:bg-gray-800" id="how-it-works">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="lg:text-center">
+            <motion.div 
+              className="lg:text-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <h2 className="text-base text-blue-600 font-semibold tracking-wide uppercase dark:text-blue-400">
                 How It Works
               </h2>
@@ -113,11 +123,16 @@ export default async function Home() {
                 HelpConnect makes it easy to request assistance and offer
                 support to others in your community.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="mt-10">
+            <motion.div 
+              className="mt-10"
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+            >
               <dl className="space-y-10 md:space-y-0 md:grid md:grid-cols-3 md:gap-x-8 md:gap-y-10">
-                <div className="relative">
+                <motion.div variants={fadeInUp} className="relative">
                   <dt>
                     <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
                       <FeatureIcon>
@@ -146,9 +161,9 @@ export default async function Home() {
                     shopping to emergency assistance, and connect with people
                     ready to help.
                   </dd>
-                </div>
+                </motion.div>
 
-                <div className="relative">
+                <motion.div variants={fadeInUp} className="relative">
                   <dt>
                     <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
                       <FeatureIcon>
@@ -176,9 +191,9 @@ export default async function Home() {
                     Browse requests in your area and offer help where you can.
                     Build your reputation as a trusted community helper.
                   </dd>
-                </div>
+                </motion.div>
 
-                <div className="relative">
+                <motion.div variants={fadeInUp} className="relative">
                   <dt>
                     <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
                       <FeatureIcon>
@@ -206,16 +221,21 @@ export default async function Home() {
                     Our verification system, ratings, and secure messaging help
                     ensure safe connections between community members.
                   </dd>
-                </div>
+                </motion.div>
               </dl>
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* Testimonials Section */}
-        <section className="py-12 bg-blue-50 dark:bg-gray-900">
+        <section className="py-12 bg-gray-50 dark:bg-gray-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto text-center">
+            <motion.div 
+              className="max-w-3xl mx-auto text-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
                 Trusted by community members
               </h2>
@@ -223,13 +243,18 @@ export default async function Home() {
                 Join thousands of people who are already building stronger
                 communities through mutual support.
               </p>
-            </div>
-            <div className="mt-12 space-y-6 md:space-y-0 md:grid md:grid-cols-3 md:gap-6">
-              {/* Testimonial cards would go here - placeholders for now */}
+            </motion.div>
+            <motion.div 
+              className="mt-12 space-y-6 md:space-y-0 md:grid md:grid-cols-3 md:gap-6"
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+            >
               {[1, 2, 3].map((i) => (
-                <div
+                <motion.div
                   key={i}
-                  className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden"
+                  variants={fadeInUp}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-105"
                 >
                   <div className="px-6 py-8">
                     <div className="flex items-center">
@@ -249,50 +274,52 @@ export default async function Home() {
                       them.&rdquo;
                     </p>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
 
         {/* CTA Section */}
         <section className="bg-white dark:bg-gray-800">
           <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
-              <span className="block">
-                Ready to build a stronger community?
-              </span>
-              <span className="block text-blue-600 dark:text-blue-400">
-                Join HelpConnect today.
-              </span>
-            </h2>
-            <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
+                <span className="block">
+                  Ready to build a stronger community?
+                </span>
+                <span className="block text-blue-600 dark:text-blue-400">
+                  Join HelpConnect today.
+                </span>
+              </h2>
+            </motion.div>
+            <motion.div 
+              className="mt-8 flex lg:mt-0 lg:flex-shrink-0"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               <div className="inline-flex rounded-md shadow">
-                {user ? (
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-                  >
-                    Go to Dashboard
-                  </Link>
-                ) : (
-                  <Link
-                    href="/signup"
-                    className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-                  >
-                    Get started
-                  </Link>
-                )}
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                >
+                  Get started
+                </Link>
               </div>
               <div className="ml-3 inline-flex rounded-md shadow">
                 <Link
                   href="/login"
-                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 dark:text-blue-400 dark:bg-gray-700 dark:hover:bg-gray-600"
+                  className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 dark:text-blue-400 dark:bg-gray-700 dark:hover:bg-gray-600 transition-all duration-300 hover:scale-105 hover:shadow-lg"
                 >
                   Log in
                 </Link>
               </div>
-            </div>
+            </motion.div>
           </div>
         </section>
       </main>
@@ -303,33 +330,39 @@ export default async function Home() {
           <nav className="-mx-5 -my-2 flex flex-wrap justify-center">
             {["About", "Features", "Privacy", "Terms", "Contact"].map(
               (item) => (
-                <div key={item} className="px-5 py-2">
+                <motion.div 
+                  key={item} 
+                  className="px-5 py-2"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   <a
                     href="#"
-                    className="text-base text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                    className="text-base text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-300"
                   >
                     {item}
                   </a>
-                </div>
+                </motion.div>
               )
             )}
           </nav>
           <div className="mt-8 flex justify-center space-x-6">
-            {/* Social media icons would go here */}
             <div className="flex space-x-6">
               {["facebook", "twitter", "instagram"].map((social) => (
-                <a
+                <motion.a
                   key={social}
                   href="#"
                   className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
                   <span className="sr-only">{social}</span>
-                  <div className="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-                </a>
+                  <div className="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors duration-300"></div>
+                </motion.a>
               ))}
             </div>
           </div>
-          <p className="mt-8 text-center text-base text-gray-400 dark:text-gray-500">
+          <p className="mt-8 text-center text-base text-gray-400">
             &copy; {new Date().getFullYear()} HelpConnect. All rights reserved.
           </p>
         </div>
