@@ -13,20 +13,25 @@ export async function createReport(
   reportedId?: string,
   requestId?: string,
   messageId?: string
-) {
-  return await supabase
-    .from('reports')
-    .insert({
-      reporter_id: reporterId,
-      reported_id: reportedId,
-      request_id: requestId,
-      message_id: messageId,
-      report_type: reportType,
-      description,
-      status: 'pending'
-    })
-    .select()
-    .single();
+): Promise<{ data: Report | null; error: DatabaseError | null }> {
+  try {
+    return await supabase
+      .from('reports')
+      .insert({
+        reporter_id: reporterId,
+        reported_id: reportedId,
+        request_id: requestId,
+        message_id: messageId,
+        report_type: reportType,
+        description,
+        status: 'pending'
+      })
+      .select()
+      .single();
+  } catch (e) {
+    console.error('Error creating report:', e);
+    return { data: null, error: e as DatabaseError };
+  }
 }
 
 export async function createNotification(
