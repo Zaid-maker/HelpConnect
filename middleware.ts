@@ -17,20 +17,31 @@ export async function middleware(req: NextRequest) {
   const supabase = createMiddlewareClient({ req, res });
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    // Check both user and session validity
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { user } } = await supabase.auth.getUser();
     
-    // If there's no user and trying to access protected route
-    if ((!user || error) && req.nextUrl.pathname.startsWith('/dashboard')) {
+    // Handle specific auth errors
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      // Only redirect if it's a fatal session error
+      if (sessionError.status !== 408 && sessionError.status !== 503) {
+        return NextResponse.redirect(new URL('/login', req.url));
+      }
+    }
+
+    // Protected routes check
+    if ((!user || !session) && req.nextUrl.pathname.startsWith('/dashboard')) {
       return NextResponse.redirect(new URL('/login', req.url));
     }
 
-    // If there's a user and trying to access auth routes
-    if (user && (req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/signup'))) {
+    // Auth routes check (logged in users)
+    if (user && session && (req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/signup'))) {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
   } catch (e) {
     console.error('Auth middleware error:', e);
-    // On error, redirect protected routes to login
+    // Only redirect on auth-specific errors
     if (req.nextUrl.pathname.startsWith('/dashboard')) {
       return NextResponse.redirect(new URL('/login', req.url));
     }

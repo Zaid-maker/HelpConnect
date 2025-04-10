@@ -21,77 +21,45 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // Create user with admin client
-    console.log('Creating user with admin client...');
-    const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: fullName
-      }
-    });
-
-    if (authError) {
-      console.error('Auth error:', authError);
-      console.error('Auth error details:', {
-        message: authError.message,
-        name: authError.name,
-        code: authError.code,
-        status: authError.status
-      });
-      return NextResponse.json({ 
-        error: authError.message 
+    // Enhanced password validation
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return NextResponse.json({
+        error: 'Password must be at least 8 characters long and contain letters, numbers, and special characters'
       }, { status: 400 });
     }
 
-    if (!authData.user) {
-      console.error('No user returned from auth.admin.createUser');
-      return NextResponse.json({ 
-        error: 'Failed to create user' 
-      }, { status: 500 });
+    // Check if username is taken (case insensitive)
+    const { data: existingUser } = await adminClient
+      .from('profiles')
+      .select('username')
+      .ilike('username', username)
+      .single();
+
+    if (existingUser) {
+      return NextResponse.json({
+        error: 'Username is already taken'
+      }, { status: 400 });
     }
 
-    console.log('User created successfully:', { 
-      id: authData.user.id, 
-      email: authData.user.email 
+    // Start transaction for user creation
+    const { data, error } = await adminClient.rpc('create_user_with_profile', {
+      p_email: email,
+      p_password: password,
+      p_username: username,
+      p_full_name: fullName
     });
 
-    // Create profile with admin client (bypasses RLS)
-    console.log('Creating profile for user...');
-    const { error: profileError, data: profileData } = await adminClient
-      .from('profiles')
-      .insert({
-        id: authData.user.id,
-        username,
-        full_name: fullName
-      })
-      .select();
-
-    if (profileError) {
-      console.error('Profile error:', profileError);
-      console.error('Profile error details:', {
-        message: profileError.message,
-        code: profileError.code,
-        details: profileError.details,
-        hint: profileError.hint
-      });
-      
-      // If profile creation fails, delete the user to avoid orphaned users
-      console.log('Deleting user due to profile creation failure:', authData.user.id);
-      await adminClient.auth.admin.deleteUser(authData.user.id);
-      
+    if (error) {
+      console.error('Transaction error:', error);
       return NextResponse.json({ 
-        error: profileError.message 
+        error: error.message 
       }, { status: 500 });
     }
-
-    console.log('Profile created successfully:', profileData);
-    console.log('Signup complete for:', { email, username });
 
     return NextResponse.json({
       success: true,
-      user: authData.user
+      user: data.user
     });
   } catch (error) {
     console.error('Signup API error:', error);
@@ -108,4 +76,4 @@ export async function POST(request: Request) {
       error: error instanceof Error ? error.message : 'Unknown error occurred'
     }, { status: 500 });
   }
-} 
+}
