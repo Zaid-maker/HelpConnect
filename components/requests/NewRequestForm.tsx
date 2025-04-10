@@ -25,7 +25,14 @@ const URGENCY_LEVELS = [
 ];
 
 /**
- * Converts an address to geo coordinates using OpenStreetMap Nominatim API
+ * Retrieves geographic coordinates for a given address using the OpenStreetMap Nominatim API.
+ *
+ * This asynchronous function sends a GET request with the provided address and parses the JSON response.
+ * If a result is found, it returns an object containing the numerical latitude and longitude; otherwise,
+ * or if an error occurs during the fetch, it logs the error and returns null.
+ *
+ * @param address - The address to be converted into geographic coordinates.
+ * @returns A promise that resolves to an object with latitude and longitude, or null if no coordinates are found.
  */
 async function getGeoLocation(
   address: string
@@ -52,9 +59,9 @@ async function getGeoLocation(
 }
 
 /**
- * Renders a form to create a new help request.
+ * Renders a form for creating a new help request.
  *
- * This component displays a structured form that gathers details such as the request title, description, category, urgency level, and location. Upon submission, it sends the form data to a Supabase database. If the insertion is successful, a success toast is shown and the user is redirected to the dashboard after a brief delay; if not, an error toast is displayed.
+ * This component gathers details such as title, description, category, urgency level, and location. If a location is provided and not hidden, it attempts to retrieve the corresponding geographic coordinates from an external API. The form validates inputs and submits the request to a Supabase database, displaying appropriate success or error notifications.
  *
  * @param userId - The identifier for the user submitting the help request.
  */
