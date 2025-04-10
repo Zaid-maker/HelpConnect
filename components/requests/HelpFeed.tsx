@@ -40,6 +40,19 @@ type UnverifiedRequest = Record<string, unknown> & {
   updated_at?: unknown;
 };
 
+/**
+ * Validates that a help request object has the expected structure and data types.
+ *
+ * This function ensures that the object includes all required fields with the correct types:
+ * - `id`, `user_id`, `title`, `description`, `category`, `created_at`, and `updated_at` must be strings.
+ * - `urgency_level` must be one of "low", "medium", or "high".
+ * - `location` and `geo_location` must be either a string or null.
+ * - `location_hidden` must be a boolean.
+ * - `status` must be one of "open", "in_progress", "completed", or "cancelled".
+ *
+ * @param obj - The help request object to validate, which may be unverified or already validated.
+ * @returns True if the object meets the required structure and type constraints, false otherwise.
+ */
 function isValidRequestData(obj: UnverifiedRequest | HelpRequest): boolean {
   return !!(
     typeof obj.id === "string" &&
@@ -59,6 +72,16 @@ function isValidRequestData(obj: UnverifiedRequest | HelpRequest): boolean {
   );
 }
 
+/**
+ * Validates and converts an unverified help request object into a properly typed HelpRequest.
+ *
+ * The function first checks if the provided object meets the expected structure and type requirements using
+ * isValidRequestData. If the input object is valid, it converts its fields to construct a new HelpRequest; otherwise,
+ * it returns null.
+ *
+ * @param obj - The unverified request object to validate and convert.
+ * @returns A HelpRequest if the input is valid; otherwise, null.
+ */
 function validateAndConvertRequest(obj: UnverifiedRequest): HelpRequest | null {
   if (!isValidRequestData(obj)) {
     return null;
@@ -80,6 +103,18 @@ function validateAndConvertRequest(obj: UnverifiedRequest): HelpRequest | null {
   };
 }
 
+/**
+ * Renders the HelpFeed component to display and manage community help requests with real-time updates.
+ *
+ * The component initializes its state with an initial list of help requests and subscribes to real-time changes
+ * via Supabase. It handles INSERT, UPDATE, and DELETE events by validating incoming data before updating the state.
+ * Users can filter requests by status using a dropdown, and any invalid data or actions result in an error message.
+ *
+ * @param initialRequests - The initial list of help requests to display.
+ * @param currentUserId - The ID of the current user; used to tailor interactions within the request cards.
+ *
+ * @returns A React component that renders a header with a status filter and a dynamic list of help request cards.
+ */
 export default function HelpFeed({
   initialRequests,
   currentUserId,

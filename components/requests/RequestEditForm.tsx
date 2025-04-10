@@ -24,6 +24,15 @@ const URGENCY_LEVELS = [
   { value: "high", label: "High - Immediate assistance needed" },
 ];
 
+/**
+ * Retrieves the geographical coordinates for a given address using the Nominatim API.
+ *
+ * This function queries the Nominatim service with a URL-encoded address and returns the first set of coordinates found.
+ * If the address cannot be geocoded or an error occurs, it returns null.
+ *
+ * @param address - The address to geocode.
+ * @returns An object containing latitude and longitude if found, otherwise null.
+ */
 async function getGeoLocation(
   address: string
 ): Promise<{ lat: number; lon: number } | null> {
@@ -52,6 +61,13 @@ type RequestEditFormProps = {
   initialRequest: HelpRequest;
 };
 
+/**
+ * Renders a form for editing an existing help request.
+ *
+ * This component displays a pre-populated form that allows users to update the details of a help request, including title, description, category, urgency level, and location. It first verifies that the current user is authorized to edit the request by comparing the user's ID with the help request owner's ID. If the location is updated and visible, it attempts to fetch geolocation data before submitting the updated request to the backend. On a successful update, the user is redirected to the dashboard; otherwise, error messages are displayed.
+ *
+ * @param initialRequest - The help request data to be edited. Must belong to the current user.
+ */
 export default function RequestEditForm({
   initialRequest,
 }: RequestEditFormProps) {
