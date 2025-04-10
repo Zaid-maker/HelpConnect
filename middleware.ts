@@ -17,10 +17,10 @@ export async function middleware(req: NextRequest) {
   const supabase = createMiddlewareClient({ req, res });
 
   try {
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     
     // If there's no user and trying to access protected route
-    if ((!user || error) && req.nextUrl.pathname.startsWith('/dashboard')) {
+    if (!user && req.nextUrl.pathname.startsWith('/dashboard')) {
       return NextResponse.redirect(new URL('/login', req.url));
     }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -20,7 +20,22 @@ export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<Date | null>(null);
   const router = useRouter();
+
+  // Check for lockout
+  useEffect(() => {
+    const storedLockout = localStorage.getItem('auth-lockout');
+    if (storedLockout) {
+      const lockoutTime = new Date(storedLockout);
+      if (lockoutTime > new Date()) {
+        setLockoutUntil(lockoutTime);
+      } else {
+        localStorage.removeItem('auth-lockout');
+      }
+    }
+  }, []);
 
   /**
    * Handles user sign-in via form submission using Supabase authentication.
@@ -31,6 +46,17 @@ export default function LoginForm() {
    */
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
+    
+    // Check lockout
+    if (lockoutUntil && lockoutUntil > new Date()) {
+      const timeLeft = Math.ceil((lockoutUntil.getTime() - new Date().getTime()) / 1000);
+      toast.error('Too many login attempts', {
+        description: `Please try again in ${timeLeft} seconds`,
+        duration: 4000,
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -40,8 +66,26 @@ export default function LoginForm() {
       });
 
       if (error) {
+        // Increment attempts and check for lockout
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+        
+        if (newAttempts >= 5) {
+          const lockoutTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+          setLockoutUntil(lockoutTime);
+          localStorage.setItem('auth-lockout', lockoutTime.toISOString());
+          throw new Error('Too many failed attempts. Please try again in 5 minutes.');
+        }
+
+        if (error.message === 'Invalid login credentials') {
+          throw new Error('Invalid email or password');
+        }
         throw error;
       }
+
+      // Reset attempts on successful login
+      setAttempts(0);
+      localStorage.removeItem('auth-lockout');
 
       toast.success('Welcome back!', {
         description: 'You have successfully logged in.',
@@ -56,7 +100,7 @@ export default function LoginForm() {
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Login failed', {
-        description: (error as Error).message || 'Please check your credentials and try again.',
+        description: error instanceof Error ? error.message : 'Please check your credentials and try again.',
         duration: 4000,
       });
     } finally {
@@ -121,4 +165,4 @@ export default function LoginForm() {
       </div>
     </div>
   );
-} 
+}

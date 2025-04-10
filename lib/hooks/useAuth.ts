@@ -8,58 +8,100 @@ import { useRouter } from 'next/navigation';
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Get authenticated user
-    const initAuth = async () => {
-      setLoading(true);
+    let mounted = true;
+
+    async function initAuth() {
       try {
-        // Use getUser for better security
-        const { data: { user }, error } = await supabase.auth.getUser();
-        
-        if (error) {
-          console.error('Error getting user:', error);
-          setUser(null);
+        setLoading(true);
+        setError(null);
+
+        // Get initial session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+
+        // If we have a session, validate the user
+        if (session) {
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (userError) throw userError;
+          if (mounted) setUser(user);
         } else {
-          setUser(user);
+          if (mounted) setUser(null);
         }
-      } catch (error) {
-        console.error('Error in auth initialization:', error);
-        setUser(null);
+      } catch (err) {
+        console.error('Auth initialization error:', err);
+        if (mounted) {
+          setError(err instanceof Error ? err : new Error('Authentication failed'));
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
-    };
+    }
 
     initAuth();
 
-    // Listen for auth changes
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
+      console.log('Auth state change:', event);
+      
+      if (event === 'TOKEN_REFRESHED') {
+        // Session was refreshed, no need to re-validate
+        return;
+      }
+
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        router.push('/login');
+        return;
+      }
+
       if (session) {
-        // When we get a session change, validate the user with getUser
-        const { data } = await supabase.auth.getUser();
-        setUser(data.user);
+        try {
+          // Validate user on auth state change
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (userError) throw userError;
+          setUser(user);
+        } catch (err) {
+          console.error('Error validating user:', err);
+          setUser(null);
+          setError(err instanceof Error ? err : new Error('User validation failed'));
+        }
       } else {
         setUser(null);
       }
+
       router.refresh();
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [router]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+      router.push('/login');
+    } catch (err) {
+      console.error('Sign out error:', err);
+      setError(err instanceof Error ? err : new Error('Sign out failed'));
+    }
   };
 
   return {
     user,
     loading,
+    error,
     signOut,
     isAuthenticated: !!user,
   };
-} 
+}
