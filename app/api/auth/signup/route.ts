@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     }
 
     // Check if username is taken (case insensitive)
-    const { data: existingUser, error: userCheckError } = await adminClient
+    const { data: existingUser } = await adminClient
       .from('profiles')
       .select('username')
       .ilike('username', username)

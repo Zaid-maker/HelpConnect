@@ -4,14 +4,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   try {
+    // Wait for cookie store to be available
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ cookies });
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
     
-    // Get state from cookies synchronously since we're in an async function
-    const storedState = cookieStore.get('supabase-auth-state')?.value;
+    // Get the state parameter for CSRF check
     const state = searchParams.get('state');
+    // Access cookie store after awaiting it
+    const storedState = cookieStore.get('supabase-auth-state')?.value;
     
     if (!state || !storedState || state !== storedState) {
       console.error('Invalid state parameter');
@@ -54,7 +56,6 @@ export async function GET(req: NextRequest) {
         
         if (insertError) {
           console.error('Error creating profile:', insertError);
-          // Don't redirect to dashboard if profile creation fails
           return NextResponse.redirect(new URL('/login?error=profile-creation-failed', req.url));
         }
       }
