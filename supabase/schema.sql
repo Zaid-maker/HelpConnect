@@ -216,109 +216,148 @@ BEGIN
     END IF;
 END $$;
 
--- Profiles policies
+-- Drop and recreate policies if they exist
+DO $$ 
+BEGIN
+    -- Profiles policies
+    DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON profiles;
+    DROP POLICY IF EXISTS "Users can insert their own profile" ON profiles;
+    DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
+    DROP POLICY IF EXISTS "Users can delete their own profile" ON profiles;
+
+    -- Help requests policies
+    DROP POLICY IF EXISTS "Help requests are viewable by everyone" ON help_requests;
+    DROP POLICY IF EXISTS "Users can insert their own help requests" ON help_requests;
+    DROP POLICY IF EXISTS "Users can update their own help requests" ON help_requests;
+    DROP POLICY IF EXISTS "Users can delete their own help requests" ON help_requests;
+
+    -- Offers policies
+    DROP POLICY IF EXISTS "Users can view offers on their requests" ON offers;
+    DROP POLICY IF EXISTS "Users can create offers" ON offers;
+    DROP POLICY IF EXISTS "Users can update their own offers" ON offers;
+    DROP POLICY IF EXISTS "Users can delete their own offers" ON offers;
+
+    -- Messages policies
+    DROP POLICY IF EXISTS "Users can read their own messages" ON messages;
+    DROP POLICY IF EXISTS "Users can send messages" ON messages;
+    DROP POLICY IF EXISTS "Users can mark their received messages as read" ON messages;
+
+    -- Reports policies
+    DROP POLICY IF EXISTS "Admins can view all reports" ON reports;
+    DROP POLICY IF EXISTS "Users can create reports" ON reports;
+
+    -- Notifications policies
+    DROP POLICY IF EXISTS "Users can view their own notifications" ON notifications;
+    DROP POLICY IF EXISTS "Users can mark their notifications as read" ON notifications;
+
+    -- Feedback policies
+    DROP POLICY IF EXISTS "Feedback is viewable by involved parties" ON feedback;
+    DROP POLICY IF EXISTS "Users can create feedback for completed requests" ON feedback;
+END $$;
+
+-- Create policies
 CREATE POLICY "Public profiles are viewable by everyone"
-  ON profiles FOR SELECT
-  USING (true);
+    ON profiles FOR SELECT
+    USING (true);
 
 CREATE POLICY "Users can insert their own profile"
-  ON profiles FOR INSERT
-  WITH CHECK (auth.uid() = id);
+    ON profiles FOR INSERT
+    WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Users can update their own profile"
-  ON profiles FOR UPDATE
-  USING (auth.uid() = id);
+    ON profiles FOR UPDATE
+    USING (auth.uid() = id);
 
 CREATE POLICY "Users can delete their own profile"
-  ON profiles FOR DELETE
-  USING (auth.uid() = id);
+    ON profiles FOR DELETE
+    USING (auth.uid() = id);
 
 -- Help requests policies
 CREATE POLICY "Help requests are viewable by everyone"
-  ON help_requests FOR SELECT
-  USING (true);
+    ON help_requests FOR SELECT
+    USING (true);
 
 CREATE POLICY "Users can insert their own help requests"
-  ON help_requests FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+    ON help_requests FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can update their own help requests"
-  ON help_requests FOR UPDATE
-  USING (auth.uid() = user_id);
+    ON help_requests FOR UPDATE
+    USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own help requests"
-  ON help_requests FOR DELETE
-  USING (auth.uid() = user_id);
+    ON help_requests FOR DELETE
+    USING (auth.uid() = user_id);
 
 -- Offers policies
 CREATE POLICY "Users can view offers on their requests"
-  ON offers FOR SELECT
-  USING (
-    auth.uid() IN (
-      SELECT user_id FROM help_requests WHERE id = request_id
-    ) OR auth.uid() = user_id
-  );
+    ON offers FOR SELECT
+    USING (
+        auth.uid() IN (
+            SELECT user_id FROM help_requests WHERE id = request_id
+        ) OR auth.uid() = user_id
+    );
 
 CREATE POLICY "Users can create offers"
-  ON offers FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+    ON offers FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can update their own offers"
-  ON offers FOR UPDATE
-  USING (auth.uid() = user_id);
+    ON offers FOR UPDATE
+    USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own offers"
-  ON offers FOR DELETE
-  USING (auth.uid() = user_id);
+    ON offers FOR DELETE
+    USING (auth.uid() = user_id);
 
 -- Messages policies
 CREATE POLICY "Users can read their own messages"
-  ON messages FOR SELECT
-  USING (auth.uid() IN (sender_id, receiver_id));
+    ON messages FOR SELECT
+    USING (auth.uid() IN (sender_id, receiver_id));
 
 CREATE POLICY "Users can send messages"
-  ON messages FOR INSERT
-  WITH CHECK (auth.uid() = sender_id);
+    ON messages FOR INSERT
+    WITH CHECK (auth.uid() = sender_id);
 
 CREATE POLICY "Users can mark their received messages as read"
-  ON messages FOR UPDATE
-  USING (auth.uid() = receiver_id)
-  WITH CHECK (auth.uid() = receiver_id AND OLD.read = FALSE AND NEW.read = TRUE);
+    ON messages FOR UPDATE
+    USING (auth.uid() = receiver_id)
+    WITH CHECK (auth.uid() = receiver_id AND OLD.read = FALSE AND NEW.read = TRUE);
 
 -- Reports policies
 CREATE POLICY "Admins can view all reports"
-  ON reports FOR SELECT
-  USING (auth.uid() IN (SELECT id FROM profiles WHERE is_verified = true));
+    ON reports FOR SELECT
+    USING (auth.uid() IN (SELECT id FROM profiles WHERE is_verified = true));
 
 CREATE POLICY "Users can create reports"
-  ON reports FOR INSERT
-  WITH CHECK (auth.uid() = reporter_id);
+    ON reports FOR INSERT
+    WITH CHECK (auth.uid() = reporter_id);
 
 -- Notifications policies
 CREATE POLICY "Users can view their own notifications"
-  ON notifications FOR SELECT
-  USING (auth.uid() = user_id);
+    ON notifications FOR SELECT
+    USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can mark their notifications as read"
-  ON notifications FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id AND OLD.read = FALSE AND NEW.read = TRUE);
+    ON notifications FOR UPDATE
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id AND OLD.read = FALSE AND NEW.read = TRUE);
 
 -- Feedback policies
 CREATE POLICY "Feedback is viewable by involved parties"
-  ON feedback FOR SELECT
-  USING (auth.uid() IN (rater_id, rated_id));
+    ON feedback FOR SELECT
+    USING (auth.uid() IN (rater_id, rated_id));
 
 CREATE POLICY "Users can create feedback for completed requests"
-  ON feedback FOR INSERT
-  WITH CHECK (
-    auth.uid() = rater_id AND
-    EXISTS (
-      SELECT 1 FROM help_requests
-      WHERE id = request_id
-      AND status = 'completed'
-    )
-  );
+    ON feedback FOR INSERT
+    WITH CHECK (
+        auth.uid() = rater_id AND
+        EXISTS (
+            SELECT 1 FROM help_requests
+            WHERE id = request_id
+            AND status = 'completed'
+        )
+    );
 
 -- Add triggers for updating timestamps
 CREATE OR REPLACE FUNCTION update_timestamp()
