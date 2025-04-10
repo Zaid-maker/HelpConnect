@@ -1,3 +1,6 @@
+-- Create PostGIS extension if it doesn't exist (this needs to be done first)
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 -- Create ENUMs for better data integrity if they don't exist
 DO $$ 
 BEGIN
@@ -44,12 +47,24 @@ CREATE TABLE IF NOT EXISTS help_requests (
     category TEXT NOT NULL,
     urgency_level urgency_level NOT NULL,
     location TEXT,
-    geo_location GEOGRAPHY(POINT),
-    location_hidden BOOLEAN DEFAULT FALSE,
     status request_status DEFAULT 'open',
+    location_hidden BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Add geo_location column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'help_requests'
+        AND column_name = 'geo_location'
+    ) THEN
+        ALTER TABLE help_requests ADD COLUMN geo_location GEOGRAPHY(POINT);
+    END IF;
+END $$;
 
 -- Offers table
 CREATE TABLE IF NOT EXISTS offers (
@@ -115,12 +130,10 @@ CREATE TABLE IF NOT EXISTS feedback (
     UNIQUE(request_id, rater_id, rated_id)
 );
 
--- Create PostGIS extension if it doesn't exist
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 -- Create indexes only if they don't exist
 DO $$ 
 BEGIN
+    -- Create non-spatial indexes first
     IF NOT EXISTS (SELECT 1 FROM pg_class c WHERE c.relname = 'idx_help_requests_status') THEN
         CREATE INDEX idx_help_requests_status ON help_requests(status);
     END IF;
@@ -133,14 +146,26 @@ BEGIN
         CREATE INDEX idx_help_requests_urgency ON help_requests(urgency_level);
     END IF;
     
-    IF NOT EXISTS (SELECT 1 FROM pg_class c WHERE c.relname = 'idx_help_requests_location') THEN
-        CREATE INDEX idx_help_requests_location ON help_requests USING GIST (geo_location);
-    END IF;
-    
     IF NOT EXISTS (SELECT 1 FROM pg_class c WHERE c.relname = 'idx_help_requests_user') THEN
         CREATE INDEX idx_help_requests_user ON help_requests(user_id);
     END IF;
-    
+
+    -- Create spatial index only if PostGIS is available and column exists
+    IF EXISTS (
+        SELECT 1 
+        FROM information_schema.columns 
+        WHERE table_name = 'help_requests' 
+        AND column_name = 'geo_location'
+    ) AND EXISTS (
+        SELECT 1 
+        FROM pg_extension 
+        WHERE extname = 'postgis'
+    ) THEN
+        IF NOT EXISTS (SELECT 1 FROM pg_class c WHERE c.relname = 'idx_help_requests_location') THEN
+            CREATE INDEX idx_help_requests_location ON help_requests USING GIST (geo_location);
+        END IF;
+    END IF;
+
     IF NOT EXISTS (SELECT 1 FROM pg_class c WHERE c.relname = 'idx_messages_read') THEN
         CREATE INDEX idx_messages_read ON messages(read);
     END IF;
