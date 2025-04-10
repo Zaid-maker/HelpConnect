@@ -1,27 +1,55 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import Button from '@/components/ui/Button';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import Button from "@/components/ui/Button";
+import { toast } from "sonner";
+import type { UrgencyLevel } from "@/lib/types";
 
 const CATEGORIES = [
-  'General Help',
-  'Transportation',
-  'Shopping',
-  'Household',
-  'Childcare',
-  'Pet Care',
-  'Medical',
-  'Other'
+  "General Help",
+  "Transportation",
+  "Shopping",
+  "Household",
+  "Childcare",
+  "Pet Care",
+  "Medical",
+  "Other",
 ];
 
 const URGENCY_LEVELS = [
-  { value: 'low', label: 'Low - Can wait a few days' },
-  { value: 'medium', label: 'Medium - Within 24 hours' },
-  { value: 'high', label: 'High - Immediate assistance needed' }
+  { value: "low", label: "Low - Can wait a few days" },
+  { value: "medium", label: "Medium - Within 24 hours" },
+  { value: "high", label: "High - Immediate assistance needed" },
 ];
+
+/**
+ * Converts an address to geo coordinates using OpenStreetMap Nominatim API
+ */
+async function getGeoLocation(
+  address: string
+): Promise<{ lat: number; lon: number } | null> {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        address
+      )}`
+    );
+    const data = await response.json();
+
+    if (data && data[0]) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lon: parseFloat(data[0].lon),
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error getting coordinates:", error);
+    return null;
+  }
+}
 
 /**
  * Renders a form to create a new help request.
@@ -34,45 +62,72 @@ export default function NewRequestForm({ userId }: { userId: string }) {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setGeoError(null);
 
     const formData = new FormData(e.currentTarget);
+    const location = formData.get("location") as string;
+    const locationHidden = formData.get("location_hidden") === "true";
+
+    let geoLocation = null;
+    if (location && !locationHidden) {
+      geoLocation = await getGeoLocation(location);
+      if (!geoLocation && !locationHidden) {
+        setGeoError(
+          "Could not find coordinates for the provided location. Please check the address."
+        );
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    const urgencyLevel = formData.get("urgency_level") as UrgencyLevel;
+    if (!["low", "medium", "high"].includes(urgencyLevel)) {
+      toast.error("Invalid urgency level");
+      setIsSubmitting(false);
+      return;
+    }
+
     const data = {
       user_id: userId,
-      title: formData.get('title') as string,
-      description: formData.get('description') as string,
-      category: formData.get('category') as string,
-      urgency_level: formData.get('urgency_level') as string,
-      location: formData.get('location') as string,
-      location_hidden: formData.get('location_hidden') === 'true'
+      title: formData.get("title") as string,
+      description: formData.get("description") as string,
+      category: formData.get("category") as string,
+      urgency_level: urgencyLevel,
+      location,
+      location_hidden: locationHidden,
+      status: "open" as const,
+      geo_location: geoLocation
+        ? `POINT(${geoLocation.lon} ${geoLocation.lat})`
+        : null,
     };
 
     try {
-      const { error } = await supabase
-        .from('help_requests')
-        .insert([data]);
+      const { error } = await supabase.from("help_requests").insert([data]);
 
       if (error) throw error;
 
       // Show success toast
-      toast.success('Help request created successfully!', {
-        description: 'Your request has been posted and is now visible to the community.',
+      toast.success("Help request created successfully!", {
+        description:
+          "Your request has been posted and is now visible to the community.",
         duration: 3000,
       });
 
       // Wait for the toast to be visible before redirecting
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push("/dashboard");
         router.refresh();
       }, 1000);
-
     } catch (err) {
-      console.error('Error creating request:', err);
-      toast.error('Failed to create request', {
-        description: 'There was an error creating your help request. Please try again.',
+      console.error("Error creating request:", err);
+      toast.error("Failed to create request", {
+        description:
+          "There was an error creating your help request. Please try again.",
         duration: 4000,
       });
     } finally {
@@ -83,7 +138,10 @@ export default function NewRequestForm({ userId }: { userId: string }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-2">
-        <label htmlFor="title" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="title"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-200"
+        >
           Title
         </label>
         <input
@@ -97,7 +155,10 @@ export default function NewRequestForm({ userId }: { userId: string }) {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="description" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="description"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-200"
+        >
           Description
         </label>
         <textarea
@@ -111,7 +172,10 @@ export default function NewRequestForm({ userId }: { userId: string }) {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="category" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="category"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-200"
+        >
           Category
         </label>
         <select
@@ -130,7 +194,10 @@ export default function NewRequestForm({ userId }: { userId: string }) {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="urgency_level" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="urgency_level"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-200"
+        >
           Urgency Level
         </label>
         <select
@@ -149,7 +216,10 @@ export default function NewRequestForm({ userId }: { userId: string }) {
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="location" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="location"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-200"
+        >
           Location
         </label>
         <input
@@ -157,8 +227,13 @@ export default function NewRequestForm({ userId }: { userId: string }) {
           name="location"
           id="location"
           className="block w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 transition-colors duration-200 placeholder-gray-400 dark:placeholder-gray-500"
-          placeholder="City, State, or specific area"
+          placeholder="Enter a specific address or area"
         />
+        {geoError && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {geoError}
+          </p>
+        )}
       </div>
 
       <div className="flex items-center space-x-3">
@@ -169,7 +244,10 @@ export default function NewRequestForm({ userId }: { userId: string }) {
           value="true"
           className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
         />
-        <label htmlFor="location_hidden" className="text-sm text-gray-700 dark:text-gray-300">
+        <label
+          htmlFor="location_hidden"
+          className="text-sm text-gray-700 dark:text-gray-300"
+        >
           Hide my location from other users
         </label>
       </div>
@@ -183,14 +261,10 @@ export default function NewRequestForm({ userId }: { userId: string }) {
         >
           Cancel
         </Button>
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          size="lg"
-        >
-          {isSubmitting ? 'Creating...' : 'Create Request'}
+        <Button type="submit" disabled={isSubmitting} size="lg">
+          {isSubmitting ? "Creating..." : "Create Request"}
         </Button>
       </div>
     </form>
   );
-} 
+}

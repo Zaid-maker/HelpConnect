@@ -1,7 +1,7 @@
-export type RequestStatus = 'open' | 'in_progress' | 'completed' | 'cancelled';
-export type UrgencyLevel = 'low' | 'medium' | 'high';
-export type OfferStatus = 'pending' | 'accepted' | 'rejected';
-export type ReportType = 'spam' | 'inappropriate' | 'harassment' | 'other';
+export type RequestStatus = "open" | "in_progress" | "completed" | "cancelled";
+export type UrgencyLevel = "low" | "medium" | "high";
+export type OfferStatus = "pending" | "accepted" | "rejected";
+export type ReportType = "spam" | "inappropriate" | "harassment" | "other";
 
 export interface Profile {
   id: string;
@@ -25,7 +25,7 @@ export interface HelpRequest {
   category: string;
   urgency_level: UrgencyLevel;
   location: string | null;
-  geo_location: object | null;
+  geo_location: string | null; // PostGIS POINT type stored as text
   location_hidden: boolean;
   status: RequestStatus;
   created_at: string;
@@ -52,6 +52,7 @@ export interface Message {
   content: string;
   read: boolean;
   created_at: string;
+  updated_at: string;
   sender?: Profile;
   receiver?: Profile;
 }
@@ -59,47 +60,46 @@ export interface Message {
 export interface Report {
   id: string;
   reporter_id: string;
-  reported_id?: string;
-  request_id?: string;
-  message_id?: string;
-  report_type: ReportType;
-  description: string;
-  status: string;
+  reported_id: string;
+  type: ReportType;
+  details: string;
+  status: "pending" | "reviewed" | "resolved";
   created_at: string;
   updated_at: string;
   reporter?: Profile;
   reported_user?: Profile;
-  reported_request?: HelpRequest;
-  reported_message?: Message;
 }
 
 export interface Notification {
   id: string;
   user_id: string;
+  type: "message" | "offer" | "status_update" | "system";
   title: string;
   content: string;
-  type: string;
   read: boolean;
-  action_url: string | null;
+  related_id: string | null;
   created_at: string;
+  updated_at: string;
+  user?: Profile;
 }
 
 export interface Feedback {
   id: string;
   request_id: string;
-  rater_id: string;
-  rated_id: string;
+  giver_id: string;
+  receiver_id: string;
   rating: number;
   comment: string | null;
   created_at: string;
+  updated_at: string;
+  giver?: Profile;
+  receiver?: Profile;
   request?: HelpRequest;
-  rater?: Profile;
-  rated?: Profile;
 }
 
 export interface DatabaseError {
   code: string;
-  details: string;
-  hint: string;
   message: string;
+  details?: string;
+  hint?: string;
 }
