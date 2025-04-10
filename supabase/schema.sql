@@ -321,8 +321,8 @@ CREATE POLICY "Users can send messages"
 
 CREATE POLICY "Users can mark their received messages as read"
     ON messages FOR UPDATE
-    USING (auth.uid() = receiver_id)
-    WITH CHECK (auth.uid() = receiver_id AND OLD.read = FALSE AND NEW.read = TRUE);
+    USING (auth.uid() = receiver_id AND read = FALSE)
+    WITH CHECK (auth.uid() = receiver_id AND read = TRUE);
 
 -- Reports policies
 CREATE POLICY "Admins can view all reports"
@@ -340,8 +340,8 @@ CREATE POLICY "Users can view their own notifications"
 
 CREATE POLICY "Users can mark their notifications as read"
     ON notifications FOR UPDATE
-    USING (auth.uid() = user_id)
-    WITH CHECK (auth.uid() = user_id AND OLD.read = FALSE AND NEW.read = TRUE);
+    USING (auth.uid() = user_id AND read = FALSE)
+    WITH CHECK (auth.uid() = user_id AND read = TRUE);
 
 -- Feedback policies
 CREATE POLICY "Feedback is viewable by involved parties"
