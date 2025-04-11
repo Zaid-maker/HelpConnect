@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export default async function PasswordResetRequestPage() {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   
   // Check if user is already logged in
   const { data: { session } } = await supabase.auth.getSession();
@@ -26,4 +26,4 @@ export default async function PasswordResetRequestPage() {
       </div>
     </div>
   );
-} 
+}

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import PageContainer from "@/components/layout/PageContainer";
@@ -22,7 +24,7 @@ type PageProps = {
  */
 export default async function ProfilePage({ params }: PageProps) {
   const resolvedParams = await params;
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   try {
     const {

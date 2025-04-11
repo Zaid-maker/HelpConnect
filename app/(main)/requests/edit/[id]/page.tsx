@@ -1,5 +1,4 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { HelpRequest } from '@/lib/types/index';
 import PageContainer from '@/components/layout/PageContainer';
@@ -8,6 +7,8 @@ import Heading from '@/components/ui/Heading';
 import RequestEditForm from '@/components/requests/RequestEditForm';
 import { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 type Props = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -15,7 +16,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createServerSupabaseClient();
   
   try {
     const { data: request } = await supabase
@@ -54,7 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  */
 export default async function EditRequestPage({ params }: Props) {
   const resolvedParams = await params;
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createServerSupabaseClient();
 
   // Check authentication
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -94,4 +95,4 @@ export default async function EditRequestPage({ params }: Props) {
       </Card>
     </PageContainer>
   );
-} 
+}

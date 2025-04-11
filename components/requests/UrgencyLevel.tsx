@@ -1,4 +1,6 @@
-import { HelpRequest } from '@/lib/types/index';
+'use client';
+
+import { HelpRequest, UrgencyLevel as UrgencyLevelType } from '@/lib/types/index';
 import { useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'sonner';
@@ -10,24 +12,24 @@ type UrgencyLevelProps = {
 };
 
 const URGENCY_LEVELS = [
-  { value: 'low', label: 'Low - Can wait a few days' },
-  { value: 'medium', label: 'Medium - Within 24 hours' },
-  { value: 'high', label: 'High - Immediate assistance needed' }
-];
+  { value: 'low' as const, label: 'Low - Can wait a few days' },
+  { value: 'medium' as const, label: 'Medium - Within 24 hours' },
+  { value: 'high' as const, label: 'High - Immediate assistance needed' }
+] as const;
 
 const urgencyColors = {
   low: 'bg-green-100 text-green-800',
   medium: 'bg-yellow-100 text-yellow-800',
   high: 'bg-red-100 text-red-800'
-};
+} as const;
 
 export default function UrgencyLevel({ request, currentUserId, onUrgencyChange }: UrgencyLevelProps) {
-  const [currentUrgency, setCurrentUrgency] = useState(request.urgency_level);
+  const [currentUrgency, setCurrentUrgency] = useState<UrgencyLevelType>(request.urgency_level);
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClientComponentClient();
   const isOwner = currentUserId === request.user_id;
 
-  const handleUrgencyChange = async (newUrgency: string) => {
+  const handleUrgencyChange = async (newUrgency: UrgencyLevelType) => {
     if (!isOwner) return;
     
     setIsLoading(true);
@@ -44,7 +46,7 @@ export default function UrgencyLevel({ request, currentUserId, onUrgencyChange }
       setCurrentUrgency(newUrgency);
       
       // Notify parent component with updated request data
-      const updatedRequest = {
+      const updatedRequest: HelpRequest = {
         ...request,
         urgency_level: newUrgency,
         updated_at: updatedAt
@@ -60,9 +62,8 @@ export default function UrgencyLevel({ request, currentUserId, onUrgencyChange }
     }
   };
 
-  const getUrgencyColor = (urgency: string) => {
-    const key = urgency.toLowerCase() as keyof typeof urgencyColors;
-    return urgencyColors[key] || 'bg-gray-100 text-gray-800';
+  const getUrgencyColor = (urgency: UrgencyLevelType): string => {
+    return urgencyColors[urgency];
   };
 
   if (!isOwner) {
@@ -102,4 +103,4 @@ export default function UrgencyLevel({ request, currentUserId, onUrgencyChange }
       </div>
     </div>
   );
-} 
+}

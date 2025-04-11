@@ -1,33 +1,65 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { User } from '@supabase/supabase-js';
+
+export interface AuthCheckResponse {
+  isAuthenticated: boolean;
+  user: User | null;
+  error?: string;
+}
 
 export async function GET() {
   try {
-    // Use the client-side Supabase client for the auth check API
-    const supabase = createClientComponentClient();
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     
-    // Use getUser for better security - validates the token on the server
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error) {
-      console.error('Auth check getUser error:', error);
-      return NextResponse.json({ 
+      console.error('Auth check error:', error);
+      return NextResponse.json<AuthCheckResponse>({ 
         isAuthenticated: false, 
         user: null,
         error: error.message
       }, { status: 401 });
     }
+
+    // Also verify the session is valid
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
-    return NextResponse.json({
+    if (sessionError || !session) {
+      console.error('Session validation error:', sessionError);
+      return NextResponse.json<AuthCheckResponse>({ 
+        isAuthenticated: false, 
+        user: null,
+        error: sessionError?.message || 'No valid session'
+      }, { status: 401 });
+    }
+
+    // Verify user has a profile
+    if (user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.warn('User missing profile:', user.id);
+      }
+    }
+    
+    return NextResponse.json<AuthCheckResponse>({
       isAuthenticated: !!user,
       user: user
     });
   } catch (error) {
-    console.error('Auth check error:', error);
-    return NextResponse.json({ 
+    console.error('Unexpected auth check error:', error);
+    return NextResponse.json<AuthCheckResponse>({ 
       isAuthenticated: false, 
       user: null,
-      error: 'Failed to check authentication'
+      error: error instanceof Error ? error.message : 'Internal server error'
     }, { status: 500 });
   }
-} 
+}

@@ -21,4 +21,7 @@ export interface Message {
   created_at: string;
   sender: Profile;
   receiver: Profile;
-} 
+}
+
+// Re-export all types from types/index.ts
+export * from './types/index';

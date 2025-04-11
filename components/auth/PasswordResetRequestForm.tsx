@@ -1,38 +1,74 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
-/**
- * Renders a password reset request form.
- *
- * This component displays a form where users can request a password reset by providing their
- * email address. It manages the email input and loading state, handles form submission by calling
- * the authentication service to send a reset link, and uses toast notifications to inform the user
- * of success or failure.
- */
+const RATE_LIMIT_KEY = 'pwd-reset-attempts';
+const MAX_ATTEMPTS = 3;
+const LOCKOUT_DURATION = 30 * 60 * 1000; // 30 minutes
+
 export default function PasswordResetRequestForm() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
-  /**
-   * Handles the password reset form submission by sending a reset link email.
-   *
-   * Prevents the default submission behavior, sets the loading state, and initiates a password
-   * reset request using Supabase. Upon success, a success toast is displayed; on failure, the
-   * error is logged and an error toast is shown. The loading state is reset after the operation.
-   *
-   * @param e - The form submission event.
-   */
+  // Check rate limit on mount
+  useEffect(() => {
+    const checkRateLimit = () => {
+      const rateLimit = localStorage.getItem(RATE_LIMIT_KEY);
+      if (rateLimit) {
+        const { attempts, timestamp } = JSON.parse(rateLimit);
+        const timeElapsed = Date.now() - timestamp;
+        
+        if (attempts >= MAX_ATTEMPTS && timeElapsed < LOCKOUT_DURATION) {
+          const minutesLeft = Math.ceil((LOCKOUT_DURATION - timeElapsed) / 60000);
+          toast.error('Too many attempts', {
+            description: `Please try again in ${minutesLeft} minutes.`,
+            duration: 4000,
+          });
+        } else if (timeElapsed >= LOCKOUT_DURATION) {
+          // Reset rate limit after lockout period
+          localStorage.removeItem(RATE_LIMIT_KEY);
+        }
+      }
+    };
+
+    checkRateLimit();
+  }, []);
+
   async function handleResetRequest(e: React.FormEvent) {
     e.preventDefault();
+
+    // Check rate limit
+    const rateLimit = localStorage.getItem(RATE_LIMIT_KEY);
+    if (rateLimit) {
+      const { attempts, timestamp } = JSON.parse(rateLimit);
+      const timeElapsed = Date.now() - timestamp;
+      
+      if (attempts >= MAX_ATTEMPTS && timeElapsed < LOCKOUT_DURATION) {
+        const minutesLeft = Math.ceil((LOCKOUT_DURATION - timeElapsed) / 60000);
+        toast.error('Too many attempts', {
+          description: `Please try again in ${minutesLeft} minutes.`,
+          duration: 4000,
+        });
+        return;
+      } else if (timeElapsed >= LOCKOUT_DURATION) {
+        localStorage.removeItem(RATE_LIMIT_KEY);
+      }
+    }
+
     setLoading(true);
 
     try {
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error('Please enter a valid email address.');
+      }
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/password-reset/confirm`,
+        redirectTo: `${window.location.origin}/password-reset/confirm`,
       });
 
       if (error) throw error;
@@ -41,10 +77,20 @@ export default function PasswordResetRequestForm() {
         description: 'Check your email for a password reset link.',
         duration: 4000,
       });
+
+      // Update rate limit
+      const currentAttempts = rateLimit 
+        ? JSON.parse(rateLimit).attempts + 1 
+        : 1;
+      
+      localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify({
+        attempts: currentAttempts,
+        timestamp: Date.now()
+      }));
     } catch (error) {
       console.error('Reset request error:', error);
       toast.error('Failed to send reset link', {
-        description: (error as Error).message || 'Please try again later.',
+        description: error instanceof Error ? error.message : 'Please try again later.',
         duration: 4000,
       });
     } finally {
@@ -91,4 +137,4 @@ export default function PasswordResetRequestForm() {
       </div>
     </div>
   );
-} 
+}
