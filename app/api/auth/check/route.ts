@@ -1,10 +1,11 @@
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { User } from '@supabase/supabase-js';
 
 export interface AuthCheckResponse {
   isAuthenticated: boolean;
-  user: any | null;
+  user: User | null;
   error?: string;
 }
 
