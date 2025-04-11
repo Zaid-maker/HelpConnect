@@ -12,6 +12,15 @@ type RequestCardProps = {
   onStatusChange?: (updatedRequest: HelpRequest) => void;
 };
 
+/**
+ * Returns the location string from the provided help request if it exists and is not hidden.
+ *
+ * This function checks if the help request has a valid location that is not marked as hidden.
+ * If the location is missing or hidden, it returns null.
+ *
+ * @param request - The help request containing location information.
+ * @returns The location string if available and visible, otherwise null.
+ */
 function formatLocation(request: HelpRequest): string | null {
   if (!request.location || request.location_hidden) {
     return null;
@@ -22,6 +31,19 @@ function formatLocation(request: HelpRequest): string | null {
   return request.location;
 }
 
+/**
+ * Renders a card displaying the details of a help request.
+ *
+ * This component presents the help request's title, description, category, and location (if available).
+ * It conditionally shows urgency and status controls, along with interactive buttons that either allow
+ * the request owner to edit the request or enable other users to offer help by navigating to the request details.
+ * The component maintains internal state for the help request and loading indicators during navigation actions.
+ *
+ * @param request - The initial help request data to display.
+ * @param currentUserId - The current user's ID, used to determine if they own the request.
+ * @param onStatusChange - Optional callback invoked when the help request status is updated.
+ * @returns A JSX element representing the rendered request card.
+ */
 export default function RequestCard({
   request: initialRequest,
   currentUserId,
