@@ -32,8 +32,9 @@ export const dynamic = 'force-dynamic';
  * @returns A JSX element representing the dashboard page.
  */
 export default async function DashboardPage() {
+  const cookieStore = cookies();
   const supabase = createServerComponentClient({ 
-    cookies 
+    cookies: () => cookieStore 
   });
 
   try {
