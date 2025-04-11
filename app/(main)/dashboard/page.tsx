@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Renders the dashboard page for authenticated users.
  *
@@ -94,4 +96,4 @@ export default async function DashboardPage() {
     console.error('Unexpected error:', e);
     redirect('/login');
   }
-} 
+}
