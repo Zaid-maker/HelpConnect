@@ -52,6 +52,7 @@ export interface Message {
   content: string;
   read: boolean;
   created_at: string;
+  /** Automatically maintained by database trigger */
   updated_at: string;
   sender?: Profile;
   receiver?: Profile;
@@ -91,6 +92,7 @@ export interface Feedback {
   rating: number;
   comment: string | null;
   created_at: string;
+  /** Automatically maintained by database trigger */
   updated_at: string;
   giver?: Profile;
   receiver?: Profile;
