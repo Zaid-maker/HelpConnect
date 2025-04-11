@@ -1,5 +1,4 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { HelpRequest } from '@/lib/types/index';
 import PageContainer from '@/components/layout/PageContainer';
@@ -17,7 +16,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createServerSupabaseClient();
   
   try {
     const { data: request } = await supabase
@@ -56,7 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
  */
 export default async function EditRequestPage({ params }: Props) {
   const resolvedParams = await params;
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createServerSupabaseClient();
 
   // Check authentication
   const { data: { user }, error: authError } = await supabase.auth.getUser();

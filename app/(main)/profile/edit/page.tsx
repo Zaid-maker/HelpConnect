@@ -8,7 +8,7 @@ import ProfileEditForm from '@/components/profile/ProfileEditForm';
 export const dynamic = 'force-dynamic';
 
 export default async function EditProfilePage() {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   

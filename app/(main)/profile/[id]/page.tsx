@@ -24,7 +24,7 @@ type PageProps = {
  */
 export default async function ProfilePage({ params }: PageProps) {
   const resolvedParams = await params;
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   try {
     const {
