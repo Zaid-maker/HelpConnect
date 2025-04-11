@@ -1,7 +1,9 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { 
   Notification, 
-  ReportType
+  ReportType,
+  Report,
+  DatabaseError
 } from '../types';
 
 const supabase = createClientComponentClient();
