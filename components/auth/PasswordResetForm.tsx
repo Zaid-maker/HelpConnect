@@ -19,23 +19,38 @@ export default function PasswordResetForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isValidSession, setIsValidSession] = useState(false);
   const router = useRouter();
 
   // Check if hash fragment is present (from password reset email)
   useEffect(() => {
-    // The #access_token and #type=recovery hash params are handled automatically by Supabase Auth
     const handlePasswordReset = async () => {
-      const { error } = await supabase.auth.getSession();
-      if (error) {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) throw error;
+        
+        // For password reset, we need a valid session with type 'recovery'
+        if (!session?.user?.email || session.user.aud !== 'authenticated') {
+          throw new Error('Invalid session');
+        }
+        
+        setIsValidSession(true);
+      } catch (error) {
+        console.error('Session validation error:', error);
         toast.error('Invalid reset link', {
           description: 'This password reset link is invalid or has expired. Please request a new one.',
           duration: 4000,
         });
+        // Redirect to password reset request page after a delay
+        setTimeout(() => {
+          router.push('/password-reset/request');
+        }, 3000);
       }
     };
 
     handlePasswordReset();
-  }, []);
+  }, [router]);
 
   /**
    * Handles the password update process from the reset form.
@@ -48,36 +63,41 @@ export default function PasswordResetForm() {
    */
   async function handlePasswordUpdate(e: React.FormEvent) {
     e.preventDefault();
+    
+    if (!isValidSession) {
+      toast.error('Invalid session', {
+        description: 'Your session has expired. Please request a new password reset link.',
+        duration: 4000,
+      });
+      router.push('/password-reset/request');
+      return;
+    }
+    
     setLoading(true);
 
-    // Validate passwords
-    if (password !== confirmPassword) {
-      toast.error('Password mismatch', {
-        description: 'The passwords you entered do not match.',
-        duration: 4000,
-      });
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.error('Invalid password', {
-        description: 'Password must be at least 6 characters long.',
-        duration: 4000,
-      });
-      setLoading(false);
-      return;
-    }
-
     try {
+      // Password validation
+      if (password !== confirmPassword) {
+        throw new Error('The passwords you entered do not match.');
+      }
+
+      // Password strength validation
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+      if (!passwordRegex.test(password)) {
+        throw new Error('Password must be at least 8 characters and contain letters, numbers, and special characters.');
+      }
+
       const { error } = await supabase.auth.updateUser({ password });
       
       if (error) throw error;
       
       toast.success('Password updated', {
-        description: 'Your password has been successfully updated.',
+        description: 'Your password has been successfully updated. Redirecting to login...',
         duration: 3000,
       });
+      
+      // Sign out the user from the recovery session
+      await supabase.auth.signOut();
       
       // Redirect to login after a short delay
       setTimeout(() => {
@@ -86,7 +106,7 @@ export default function PasswordResetForm() {
     } catch (error) {
       console.error('Error updating password:', error);
       toast.error('Failed to update password', {
-        description: (error as Error).message || 'Please try again later.',
+        description: error instanceof Error ? error.message : 'Please try again later.',
         duration: 4000,
       });
     } finally {
@@ -109,8 +129,13 @@ export default function PasswordResetForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            minLength={8}
             className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
+            placeholder="At least 8 characters"
           />
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Must contain letters, numbers, and special characters
+          </p>
         </div>
         
         <div>
@@ -123,13 +148,14 @@ export default function PasswordResetForm() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
+            minLength={8}
             className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
           />
         </div>
         
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !isValidSession}
           className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
         >
           {loading ? 'Updating...' : 'Update Password'}
@@ -137,4 +163,4 @@ export default function PasswordResetForm() {
       </form>
     </div>
   );
-} 
+}

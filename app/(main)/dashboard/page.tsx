@@ -1,7 +1,6 @@
 import HelpFeed from '@/components/requests/HelpFeed';
 import { HelpRequest } from '@/lib/types/index';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import PageContainer from '@/components/layout/PageContainer';
 import Card from '@/components/layout/Card';
@@ -32,10 +31,7 @@ export const dynamic = 'force-dynamic';
  * @returns A JSX element representing the dashboard page.
  */
 export default async function DashboardPage() {
-  const cookieStore = cookies();
-  const supabase = createServerComponentClient({ 
-    cookies: () => cookieStore 
-  });
+  const supabase = await createServerSupabaseClient();
 
   try {
     const { data: { user }, error } = await supabase.auth.getUser();

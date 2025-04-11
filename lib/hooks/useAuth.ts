@@ -1,16 +1,56 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { User } from '@supabase/supabase-js';
+import type { User, AuthError } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
-export function useAuth() {
+export interface AuthState {
+  user: User | null;
+  loading: boolean;
+  error: Error | null;
+  isAuthenticated: boolean;
+}
+
+export function useAuth(): AuthState & {
+  signOut: () => Promise<void>;
+  refreshSession: () => Promise<void>;
+} {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const router = useRouter();
 
+  const handleError = useCallback((error: AuthError | Error | unknown, context: string) => {
+    console.error(`${context}:`, error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    setError(error instanceof Error ? error : new Error(errorMessage));
+    toast.error('Authentication Error', {
+      description: errorMessage,
+      duration: 4000,
+    });
+  }, []);
+
+  // Function to refresh the session
+  const refreshSession = useCallback(async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      
+      if (session) {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        setUser(user);
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      handleError(error, 'Session refresh error');
+    }
+  }, [handleError]);
+
+  // Initialize auth state
   useEffect(() => {
     let mounted = true;
 
@@ -19,11 +59,9 @@ export function useAuth() {
         setLoading(true);
         setError(null);
 
-        // Get initial session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
 
-        // If we have a session, validate the user
         if (session) {
           const { data: { user }, error: userError } = await supabase.auth.getUser();
           if (userError) throw userError;
@@ -31,10 +69,10 @@ export function useAuth() {
         } else {
           if (mounted) setUser(null);
         }
-      } catch (err) {
-        console.error('Auth initialization error:', err);
+      } catch (error) {
+        console.error('Auth initialization error:', error);
         if (mounted) {
-          setError(err instanceof Error ? err : new Error('Authentication failed'));
+          handleError(error, 'Auth initialization error');
           setUser(null);
         }
       } finally {
@@ -51,7 +89,8 @@ export function useAuth() {
       console.log('Auth state change:', event);
       
       if (event === 'TOKEN_REFRESHED') {
-        // Session was refreshed, no need to re-validate
+        // Refresh user data when token is refreshed
+        await refreshSession();
         return;
       }
 
@@ -63,14 +102,12 @@ export function useAuth() {
 
       if (session) {
         try {
-          // Validate user on auth state change
           const { data: { user }, error: userError } = await supabase.auth.getUser();
           if (userError) throw userError;
           setUser(user);
-        } catch (err) {
-          console.error('Error validating user:', err);
+        } catch (error) {
+          handleError(error, 'User validation error');
           setUser(null);
-          setError(err instanceof Error ? err : new Error('User validation failed'));
         }
       } else {
         setUser(null);
@@ -83,25 +120,26 @@ export function useAuth() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, [router, handleError, refreshSession]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
       router.push('/login');
-    } catch (err) {
-      console.error('Sign out error:', err);
-      setError(err instanceof Error ? err : new Error('Sign out failed'));
+      toast.success('Signed out successfully');
+    } catch (error) {
+      handleError(error, 'Sign out error');
     }
-  };
+  }, [router, handleError]);
 
   return {
     user,
     loading,
     error,
     signOut,
+    refreshSession,
     isAuthenticated: !!user,
   };
 }
