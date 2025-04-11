@@ -6,6 +6,8 @@ import Heading from "@/components/ui/Heading";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProfilePage() {
   const supabase = createServerSupabaseClient();
 

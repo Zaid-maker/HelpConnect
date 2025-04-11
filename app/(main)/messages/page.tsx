@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import Image from 'next/image';
 
+export const dynamic = 'force-dynamic';
+
 export default async function MessagesPage() {
   const cookieStore = await cookies();
   const supabase = createClient(
@@ -54,4 +56,4 @@ export default async function MessagesPage() {
       </div>
     </div>
   );
-} 
+}

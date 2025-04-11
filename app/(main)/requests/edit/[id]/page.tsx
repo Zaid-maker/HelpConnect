@@ -8,6 +8,8 @@ import Heading from '@/components/ui/Heading';
 import RequestEditForm from '@/components/requests/RequestEditForm';
 import { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 type Props = {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -94,4 +96,4 @@ export default async function EditRequestPage({ params }: Props) {
       </Card>
     </PageContainer>
   );
-} 
+}

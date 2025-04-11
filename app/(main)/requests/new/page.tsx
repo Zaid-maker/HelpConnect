@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Renders a page for creating a new help request.
  *
@@ -50,4 +52,4 @@ export default async function NewRequestPage() {
       </Card>
     </PageContainer>
   );
-} 
+}
