@@ -6,6 +6,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { HelpRequest, UrgencyLevel, RequestStatus } from "@/lib/types/index";
 import Button from "@/components/ui/Button";
 import { toast } from "sonner";
+import { getGeoLocation } from "@/lib/utils/location";
 
 const CATEGORIES = [
   "General Help",
@@ -23,39 +24,6 @@ const URGENCY_LEVELS = [
   { value: "medium", label: "Medium - Within 24 hours" },
   { value: "high", label: "High - Immediate assistance needed" },
 ];
-
-/**
- * Retrieves the geographical coordinates for a given address using the Nominatim API.
- *
- * This function queries the Nominatim service with a URL-encoded address and returns the first set of coordinates found.
- * If the address cannot be geocoded or an error occurs, it returns null.
- *
- * @param address - The address to geocode.
- * @returns An object containing latitude and longitude if found, otherwise null.
- */
-async function getGeoLocation(
-  address: string
-): Promise<{ lat: number; lon: number } | null> {
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        address
-      )}`
-    );
-    const data = await response.json();
-
-    if (data && data[0]) {
-      return {
-        lat: parseFloat(data[0].lat),
-        lon: parseFloat(data[0].lon),
-      };
-    }
-    return null;
-  } catch (error) {
-    console.error("Error getting coordinates:", error);
-    return null;
-  }
-}
 
 type RequestEditFormProps = {
   initialRequest: HelpRequest;

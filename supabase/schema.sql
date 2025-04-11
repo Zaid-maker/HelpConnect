@@ -87,6 +87,10 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Add updated_at columns to messages and feedback tables
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE feedback ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
 -- Reports table
 CREATE TABLE IF NOT EXISTS reports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -368,6 +372,15 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Create a function to update the updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 -- Drop existing triggers if they exist and create new ones
 DROP TRIGGER IF EXISTS update_profiles_timestamp ON profiles;
 DROP TRIGGER IF EXISTS update_help_requests_timestamp ON help_requests;
@@ -393,6 +406,19 @@ CREATE TRIGGER update_reports_timestamp
     BEFORE UPDATE ON reports
     FOR EACH ROW
     EXECUTE FUNCTION update_timestamp();
+
+-- Create triggers for messages and feedback tables
+DROP TRIGGER IF EXISTS update_messages_updated_at ON messages;
+CREATE TRIGGER update_messages_updated_at
+    BEFORE UPDATE ON messages
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_feedback_updated_at ON feedback;
+CREATE TRIGGER update_feedback_updated_at
+    BEFORE UPDATE ON feedback
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Create or replace location search function
 CREATE OR REPLACE FUNCTION search_help_requests_by_location(
