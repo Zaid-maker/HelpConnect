@@ -7,6 +7,7 @@ import { HelpRequest, UrgencyLevel, RequestStatus } from "@/lib/types/index";
 import Button from "@/components/ui/Button";
 import { toast } from "sonner";
 import { getGeoLocation } from "@/lib/utils/location";
+import MapAttribution from "@/components/common/MapAttribution";
 
 const CATEGORIES = [
   "General Help",
@@ -245,6 +246,9 @@ export default function RequestEditForm({
           className="block w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 transition-colors duration-200 placeholder-gray-400 dark:placeholder-gray-500"
           placeholder="Enter a specific address or area"
         />
+        {/* OpenStreetMap attribution */}
+
+        <MapAttribution />
         {geoError && (
           <p className="mt-1 text-sm text-red-600 dark:text-red-400">
             {geoError}

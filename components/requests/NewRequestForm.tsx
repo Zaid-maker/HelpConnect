@@ -7,6 +7,7 @@ import { UrgencyLevel } from "@/lib/types";
 import Button from "@/components/ui/Button";
 import { toast } from "sonner";
 import { getGeoLocation } from "@/lib/utils/location";
+import MapAttribution from "@/components/common/MapAttribution";
 
 const CATEGORIES = [
   "General Help",
