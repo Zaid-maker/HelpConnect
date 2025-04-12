@@ -1,7 +1,6 @@
 import HelpFeed from '@/components/requests/HelpFeed';
 import { HelpRequest } from '@/lib/types/index';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import PageContainer from '@/components/layout/PageContainer';
 import Card from '@/components/layout/Card';
@@ -19,6 +18,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Renders the dashboard page for authenticated users.
  *
@@ -30,9 +31,7 @@ export const metadata: Metadata = {
  * @returns A JSX element representing the dashboard page.
  */
 export default async function DashboardPage() {
-  const supabase = createServerComponentClient({ 
-    cookies 
-  });
+  const supabase = await createServerSupabaseClient();
 
   try {
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -94,4 +93,4 @@ export default async function DashboardPage() {
     console.error('Unexpected error:', e);
     redirect('/login');
   }
-} 
+}

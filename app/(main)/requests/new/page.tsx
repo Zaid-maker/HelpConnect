@@ -1,5 +1,4 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import NewRequestForm from '@/components/requests/NewRequestForm';
 import PageContainer from '@/components/layout/PageContainer';
@@ -17,6 +16,8 @@ export const metadata: Metadata = {
   },
 };
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Renders a page for creating a new help request.
  *
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
  * @returns The JSX structure for the new help request page.
  */
 export default async function NewRequestPage() {
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createServerSupabaseClient();
 
   const { data: { user }, error } = await supabase.auth.getUser();
 
@@ -50,4 +51,4 @@ export default async function NewRequestPage() {
       </Card>
     </PageContainer>
   );
-} 
+}

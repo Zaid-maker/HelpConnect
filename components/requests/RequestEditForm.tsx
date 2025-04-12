@@ -1,48 +1,61 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { HelpRequest } from '@/lib/types/index';
-import Button from '@/components/ui/Button';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { HelpRequest, UrgencyLevel, RequestStatus } from "@/lib/types/index";
+import Button from "@/components/ui/Button";
+import { toast } from "sonner";
+import { getGeoLocation } from "@/lib/utils/location";
 
 const CATEGORIES = [
-  'General Help',
-  'Transportation',
-  'Shopping',
-  'Household',
-  'Childcare',
-  'Pet Care',
-  'Medical',
-  'Other'
+  "General Help",
+  "Transportation",
+  "Shopping",
+  "Household",
+  "Childcare",
+  "Pet Care",
+  "Medical",
+  "Other",
 ];
 
 const URGENCY_LEVELS = [
-  { value: 'low', label: 'Low - Can wait a few days' },
-  { value: 'medium', label: 'Medium - Within 24 hours' },
-  { value: 'high', label: 'High - Immediate assistance needed' }
+  { value: "low", label: "Low - Can wait a few days" },
+  { value: "medium", label: "Medium - Within 24 hours" },
+  { value: "high", label: "High - Immediate assistance needed" },
 ];
 
 type RequestEditFormProps = {
   initialRequest: HelpRequest;
 };
 
-export default function RequestEditForm({ initialRequest }: RequestEditFormProps) {
+/**
+ * Renders a form for editing an existing help request.
+ *
+ * This component displays a pre-populated form that allows users to update the details of a help request, including title, description, category, urgency level, and location. It first verifies that the current user is authorized to edit the request by comparing the user's ID with the help request owner's ID. If the location is updated and visible, it attempts to fetch geolocation data before submitting the updated request to the backend. On a successful update, the user is redirected to the dashboard; otherwise, error messages are displayed.
+ *
+ * @param initialRequest - The help request data to be edited. Must belong to the current user.
+ */
+export default function RequestEditForm({
+  initialRequest,
+}: RequestEditFormProps) {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
 
   // Verify user has access to edit this request
   useEffect(() => {
     const checkAccess = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user || user.id !== initialRequest.user_id) {
-        toast.error('Access Denied', {
-          description: 'You do not have permission to edit this request.',
+        toast.error("Access Denied", {
+          description: "You do not have permission to edit this request.",
           duration: 4000,
         });
-        router.push('/dashboard');
+        router.push("/dashboard");
       }
     };
     checkAccess();
@@ -51,41 +64,81 @@ export default function RequestEditForm({ initialRequest }: RequestEditFormProps
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setGeoError(null);
 
     const formData = new FormData(e.currentTarget);
+    const location = formData.get("location") as string;
+    const locationHidden = formData.get("location_hidden") === "true";
+
+    let geoLocation = null;
+    if (location && !locationHidden) {
+      if (
+        location !== initialRequest.location ||
+        !initialRequest.geo_location
+      ) {
+        geoLocation = await getGeoLocation(location);
+        if (!geoLocation && !locationHidden) {
+          setGeoError(
+            "Could not find coordinates for the provided location. Please check the address."
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    }
+
+    const urgencyLevel = formData.get("urgency_level") as UrgencyLevel;
+    if (!["low", "medium", "high"].includes(urgencyLevel)) {
+      toast.error("Invalid urgency level");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const status = initialRequest.status as RequestStatus;
+    if (!["open", "in_progress", "completed", "cancelled"].includes(status)) {
+      toast.error("Invalid request status");
+      setIsSubmitting(false);
+      return;
+    }
+
     const data = {
-      title: formData.get('title') as string,
-      description: formData.get('description') as string,
-      category: formData.get('category') as string,
-      urgency_level: formData.get('urgency_level') as string,
-      location: formData.get('location') as string,
-      location_hidden: formData.get('location_hidden') === 'true',
-      updated_at: new Date().toISOString()
+      title: formData.get("title") as string,
+      description: formData.get("description") as string,
+      category: formData.get("category") as string,
+      urgency_level: urgencyLevel,
+      location,
+      location_hidden: locationHidden,
+      status,
+      geo_location: geoLocation
+        ? `POINT(${geoLocation.lon} ${geoLocation.lat})`
+        : location === initialRequest.location
+        ? initialRequest.geo_location
+        : null,
+      updated_at: new Date().toISOString(),
     };
 
     try {
       const { error } = await supabase
-        .from('help_requests')
+        .from("help_requests")
         .update(data)
-        .eq('id', initialRequest.id);
+        .eq("id", initialRequest.id);
 
       if (error) throw error;
 
-      toast.success('Help request updated successfully!', {
-        description: 'Your changes have been saved.',
+      toast.success("Help request updated successfully!", {
+        description: "Your changes have been saved.",
         duration: 3000,
       });
 
-      // Wait for the toast to be visible before redirecting
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push("/dashboard");
         router.refresh();
       }, 1000);
-
     } catch (err) {
-      console.error('Error updating request:', err);
-      toast.error('Failed to update request', {
-        description: 'There was an error updating your help request. Please try again.',
+      console.error("Error updating request:", err);
+      toast.error("Failed to update request", {
+        description:
+          "There was an error updating your help request. Please try again.",
         duration: 4000,
       });
     } finally {
@@ -96,7 +149,10 @@ export default function RequestEditForm({ initialRequest }: RequestEditFormProps
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-2">
-        <label htmlFor="title" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="title"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-200"
+        >
           Title
         </label>
         <input
@@ -111,7 +167,10 @@ export default function RequestEditForm({ initialRequest }: RequestEditFormProps
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="description" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="description"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-200"
+        >
           Description
         </label>
         <textarea
@@ -126,7 +185,10 @@ export default function RequestEditForm({ initialRequest }: RequestEditFormProps
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="category" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="category"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-200"
+        >
           Category
         </label>
         <select
@@ -146,7 +208,10 @@ export default function RequestEditForm({ initialRequest }: RequestEditFormProps
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="urgency_level" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="urgency_level"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-200"
+        >
           Urgency Level
         </label>
         <select
@@ -166,17 +231,25 @@ export default function RequestEditForm({ initialRequest }: RequestEditFormProps
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="location" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+        <label
+          htmlFor="location"
+          className="block text-sm font-semibold text-gray-700 dark:text-gray-200"
+        >
           Location
         </label>
         <input
           type="text"
           name="location"
           id="location"
-          defaultValue={initialRequest.location}
+          defaultValue={initialRequest.location || ""}
           className="block w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 transition-colors duration-200 placeholder-gray-400 dark:placeholder-gray-500"
-          placeholder="City, State, or specific area"
+          placeholder="Enter a specific address or area"
         />
+        {geoError && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {geoError}
+          </p>
+        )}
       </div>
 
       <div className="flex items-center space-x-3">
@@ -188,7 +261,10 @@ export default function RequestEditForm({ initialRequest }: RequestEditFormProps
           defaultChecked={initialRequest.location_hidden}
           className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
         />
-        <label htmlFor="location_hidden" className="text-sm text-gray-700 dark:text-gray-300">
+        <label
+          htmlFor="location_hidden"
+          className="text-sm text-gray-700 dark:text-gray-300"
+        >
           Hide my location from other users
         </label>
       </div>
@@ -202,14 +278,10 @@ export default function RequestEditForm({ initialRequest }: RequestEditFormProps
         >
           Cancel
         </Button>
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          size="lg"
-        >
-          {isSubmitting ? 'Saving...' : 'Save Changes'}
+        <Button type="submit" disabled={isSubmitting} size="lg">
+          {isSubmitting ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </form>
   );
-} 
+}
