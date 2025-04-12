@@ -4,8 +4,6 @@ HelpConnect is a modern web application that connects people in need with those 
 
 > **⚠️ Development Status:** This application is currently under active development. While we strive to provide a stable experience, you may encounter bugs or incomplete features. We appreciate your patience and welcome any feedback or bug reports.
 
-![HelpConnect Screenshot](public/hero-image.jpg)
-
 ## Features
 
 - 🤝 **Community Support System**
