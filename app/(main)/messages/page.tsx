@@ -6,7 +6,7 @@ import Image from 'next/image';
 export const dynamic = 'force-dynamic';
 
 export default async function MessagesPage() {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
 
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   
