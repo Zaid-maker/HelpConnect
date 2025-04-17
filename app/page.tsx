@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import Navigation from "@/components/layout/Navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Animation variants
@@ -115,8 +114,6 @@ export default function Home() {
   return (
     <AnimatePresence>
       <div className="min-h-screen">
-        <Navigation />
-
         <main className="pt-16">
           {/* Hero Section */}
           <section className="py-12 sm:py-16 lg:py-20 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 overflow-hidden">
